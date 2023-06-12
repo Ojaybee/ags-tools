@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="50"
+   height="50"
+   viewBox="0 0 13.229166 13.229167"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
+   sodipodi:docname="WS_symbol.svg">
+  <title
+     id="title134">window sample hole symbol</title>
+  <defs
+     id="defs2">
+    <linearGradient
+       id="linearGradient838"
+       osb:paint="solid">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop836" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="17.852632"
+     inkscape:cx="25.000002"
+     inkscape:cy="25.000011"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     showborder="true"
+     inkscape:snap-to-guides="true"
+     inkscape:snap-nodes="true"
+     inkscape:object-paths="false"
+     inkscape:snap-intersection-paths="false"
+     inkscape:snap-smooth-nodes="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:snap-others="true"
+     inkscape:snap-object-midpoints="true"
+     inkscape:snap-midpoints="true"
+     inkscape:object-nodes="false"
+     units="px" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>window sample hole symbol</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     style="display:inline"
+     transform="translate(0,-283.77082)">
+    <g
+       style="display:inline"
+       id="g1124"
+       transform="matrix(0.12567686,0,0,0.12567686,54.348464,267.47722)">
+      <circle
+         cx="-379.81439"
+         cy="182.27843"
+         r="47.562088"
+         id="path12-7"
+         style="fill:none;fill-opacity:0.68665047;stroke:#000000;stroke-width:4.87599993;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <circle
+         r="17.868877"
+         cy="182.27843"
+         cx="-379.81439"
+         id="path12-7-3"
+         style="fill:none;fill-opacity:0.68665047;stroke:#000000;stroke-width:0.89876699;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path931"
+         d="m -381.72007,199.49788 c -4.06831,-0.50657 -7.62042,-2.24975 -10.41984,-5.11346 -4.5334,-4.63752 -6.11437,-11.16419 -4.18653,-17.28328 1.82126,-5.78087 6.53574,-10.18873 12.47055,-11.65948 2.36299,-0.58559 5.93823,-0.57864 8.18343,0.0159 1.80308,0.47748 4.2373,1.56016 5.6079,2.49424 1.31982,0.89947 3.37605,2.92071 4.33903,4.2652 3.51264,4.90424 4.19235,11.76069 1.70056,17.15384 -2.32535,5.03291 -6.98773,8.79202 -12.21132,9.84552 -1.70727,0.34432 -4.02412,0.46326 -5.48378,0.2815 z"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:3.57142854;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+  </g>
+</svg>
