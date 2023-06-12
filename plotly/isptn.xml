@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dataplotly>
+<Option type="Map">
+ <Option type="Map" name="dynamic_properties">
+  <Option value="" type="QString" name="name"/>
+  <Option type="Map" name="properties">
+   <Option type="Map" name="color">
+    <Option value="true" type="bool" name="active"/>
+    <Option value="CASE &#xd;&#xa;WHEN &quot;Geological group at ISPT_TOP&quot; = 1 THEN 'RED' &#xd;&#xa;WHEN &quot;Geological group at ISPT_TOP&quot; = 2 THEN 'BLUE' &#xd;&#xa;WHEN &quot;Geological group at ISPT_TOP&quot; = 3 THEN 'GREEN' &#xd;&#xa;WHEN &quot;Geological group at ISPT_TOP&quot; = 4 THEN 'YELLOW' &#xd;&#xa;WHEN &quot;Geological group at ISPT_TOP&quot; = 5 THEN 'ORANGE' &#xd;&#xa;WHEN &quot;Geological group at ISPT_TOP&quot; = 6 THEN 'GREY' &#xd;&#xa;WHEN &quot;Geological group at ISPT_TOP&quot; = 7 THEN 'BLACK' &#xd;&#xa;WHEN &quot;Geological group at ISPT_TOP&quot; = 8 THEN 'WHITE' &#xd;&#xa;WHEN &quot;Geological group at ISPT_TOP&quot; = 9 THEN 'PURPLE' &#xd;&#xa;ELSE 'cyan' END" type="QString" name="expression"/>
+    <Option value="3" type="int" name="type"/>
+   </Option>
+   <Option type="Map" name="filter">
+    <Option value="false" type="bool" name="active"/>
+    <Option value="&quot;Geological group at ISPT_TOP&quot; = '8'" type="QString" name="expression"/>
+    <Option value="3" type="int" name="type"/>
+   </Option>
+  </Option>
+  <Option value="collection" type="QString" name="type"/>
+ </Option>
+ <Option type="Map" name="plot_layout">
+  <Option value="" type="QString" name="additional_info_expression"/>
+  <Option value="group" type="QString" name="bar_mode"/>
+  <Option value="0" type="double" name="bargaps"/>
+  <Option value="false" type="bool" name="bins_check"/>
+  <Option value="#000000" type="QString" name="font_title_color"/>
+  <Option value="Arial" type="QString" name="font_title_family"/>
+  <Option value="10" type="int" name="font_title_size"/>
+  <Option value="#000000" type="QString" name="font_xlabel_color"/>
+  <Option value="Arial" type="QString" name="font_xlabel_family"/>
+  <Option value="10" type="int" name="font_xlabel_size"/>
+  <Option value="#000000" type="QString" name="font_xticks_color"/>
+  <Option value="Arial" type="QString" name="font_xticks_family"/>
+  <Option value="10" type="int" name="font_xticks_size"/>
+  <Option value="#000000" type="QString" name="font_ylabel_color"/>
+  <Option value="Arial" type="QString" name="font_ylabel_family"/>
+  <Option value="10" type="int" name="font_ylabel_size"/>
+  <Option value="#000000" type="QString" name="font_yticks_color"/>
+  <Option value="Arial" type="QString" name="font_yticks_family"/>
+  <Option value="10" type="int" name="font_yticks_size"/>
+  <Option value="#bdbfc0" type="QString" name="gridcolor"/>
+  <Option value="true" type="bool" name="legend"/>
+  <Option value="v" type="QString" name="legend_orientation"/>
+  <Option type="invalid" name="legend_title"/>
+  <Option type="Map" name="polar">
+   <Option type="Map" name="angularaxis">
+    <Option value="clockwise" type="QString" name="direction"/>
+   </Option>
+  </Option>
+  <Option type="Map" name="range_slider">
+   <Option value="1" type="int" name="borderwidth"/>
+   <Option value="false" type="bool" name="visible"/>
+  </Option>
+  <Option value="" type="QString" name="title"/>
+  <Option type="invalid" name="x_inv"/>
+  <Option type="invalid" name="x_max"/>
+  <Option type="invalid" name="x_min"/>
+  <Option value="SPT 'N' value" type="QString" name="x_title"/>
+  <Option value="linear" type="QString" name="x_type"/>
+  <Option type="invalid" name="xaxis"/>
+  <Option value="reversed" type="QString" name="y_inv"/>
+  <Option type="invalid" name="y_max"/>
+  <Option type="invalid" name="y_min"/>
+  <Option value="Depth to top of test" type="QString" name="y_title"/>
+  <Option value="linear" type="QString" name="y_type"/>
+  <Option value="" type="QString" name="z_title"/>
+ </Option>
+ <Option type="Map" name="plot_properties">
+  <Option type="invalid" name="additional_hover_text"/>
+  <Option value="10" type="int" name="bins"/>
+  <Option value="v" type="QString" name="box_orientation"/>
+  <Option value="false" type="bool" name="box_outliers"/>
+  <Option value="false" type="bool" name="box_stat"/>
+  <Option value="Greys" type="QString" name="color_scale"/>
+  <Option value="false" type="bool" name="color_scale_data_defined_in_check"/>
+  <Option value="false" type="bool" name="color_scale_data_defined_in_invert_check"/>
+  <Option value="fill" type="QString" name="cont_type"/>
+  <Option value="Fill" type="QString" name="contour_type_combo"/>
+  <Option value="false" type="bool" name="cumulative"/>
+  <Option type="List" name="custom">
+   <Option value="SPT 'N' value" type="QString"/>
+  </Option>
+  <Option value="auto" type="QString" name="hover_label_position"/>
+  <Option type="invalid" name="hover_label_text"/>
+  <Option value="all" type="QString" name="hover_text"/>
+  <Option value="#8ebad9" type="QString" name="in_color"/>
+  <Option value="false" type="bool" name="invert_color_scale"/>
+  <Option value="increasing" type="QString" name="invert_hist"/>
+  <Option value="false" type="bool" name="layout_filter_by_atlas"/>
+  <Option value="false" type="bool" name="layout_filter_by_map"/>
+  <Option value="Solid Line" type="QString" name="line_combo"/>
+  <Option value="solid" type="QString" name="line_dash"/>
+  <Option value="markers" type="QString" name="marker"/>
+  <Option value="10" type="double" name="marker_size"/>
+  <Option value="0" type="int" name="marker_symbol"/>
+  <Option value="Points" type="QString" name="marker_type_combo"/>
+  <Option value="1" type="double" name="marker_width"/>
+  <Option value="SPT 'N' value - Depth to top of test" type="QString" name="name"/>
+  <Option value="" type="QString" name="normalization"/>
+  <Option value="1" type="double" name="opacity"/>
+  <Option value="#1f77b4" type="QString" name="out_color"/>
+  <Option value="0" type="double" name="pie_hole"/>
+  <Option value="" type="QString" name="point_combo"/>
+  <Option value="false" type="bool" name="selected_features_only"/>
+  <Option value="false" type="bool" name="show_colorscale_legend"/>
+  <Option value="true" type="bool" name="show_lines"/>
+  <Option value="true" type="bool" name="show_lines_check"/>
+  <Option value="true" type="bool" name="show_mean_line"/>
+  <Option value="true" type="bool" name="violin_box"/>
+  <Option value="both" type="QString" name="violin_side"/>
+  <Option value="false" type="bool" name="visible_features_only"/>
+  <Option value="SPT 'N' value" type="QString" name="x_name"/>
+  <Option value="Depth to top of test" type="QString" name="y_name"/>
+  <Option value="" type="QString" name="z_name"/>
+ </Option>
+ <Option value="scatter" type="QString" name="plot_type"/>
+ <Option value="working_6_97a3a15c_153a_4d07_9c61_b0215b6cd522" type="QString" name="source_layer_id"/>
+</Option>
