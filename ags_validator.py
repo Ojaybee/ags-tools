@@ -51,8 +51,9 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 	OUTPUT = 'OUTPUT'
 	
 	# Define constants for the dictionary choices and checker options
-	DICTIONARY_OPTIONS = ['None', 'v4_0_3', 'v4_0_4', 'v4_1', 'v4_1_1']  # replace with your actual options
-	CHECKER_OPTIONS = ['ags', 'bgs']  # replace with your actual options
+	DICTIONARY_OPTIONS = ['None', '4.0.3', '4.0.4', '4.1', '4.1.1']  
+	DICTIONARY_ALIASES = {'None': 'v4_1_1','4.0.3': 'v4_0_3','4.0.4': 'v4_0_4','4.1': 'v4_1','4.1.1': 'v4_1_1'}
+	CHECKER_OPTIONS = ['ags', 'bgs']  
 
 	def initAlgorithm(self, config):
 		"""
@@ -72,11 +73,12 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 		self.addParameter(
 			QgsProcessingParameterEnum(
 				self.DICTIONARY,
-				self.tr("Dictionary"),
+				self.tr("AGS version"),
 				options=self.DICTIONARY_OPTIONS,
 				defaultValue=0
 			)
 		)
+
 		self.addParameter(
 			QgsProcessingParameterEnum(
 				self.CHECKERS,
@@ -101,7 +103,10 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 
 		# Retrieve the values of the parameters
 		file_path = self.parameterAsFile(parameters, self.INPUT, context)
+		
 		dictionary = self.DICTIONARY_OPTIONS[self.parameterAsEnum(parameters, self.DICTIONARY, context)]
+		dictionary_alias = self.DICTIONARY_ALIASES[dictionary]
+		
 		checkers_selected_indices = self.parameterAsEnums(parameters, self.CHECKERS, context)
 		checkers_selected = [self.CHECKER_OPTIONS[i] for i in checkers_selected_indices]
 		output_file = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
@@ -115,12 +120,9 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 			file_content = f.read()
 		
 		files = {'files': (file_name, file_content, 'multipart/form-data')}
-
-		if dictionary == 'None':
-			dictionary = 'v4_1_1'
 		
 		payload = {
-			'std_dictionary': dictionary,
+			'std_dictionary': dictionary_alias,
 			'checkers': checkers_selected,
 			'fmt': fmt
 		}

@@ -1,5 +1,5 @@
 #/***************************************************************************
-# AGS2DB
+# AGS Tools
 #
 # This plugin parses an AGS file and creates an SQlite database from it
 #							 -------------------
@@ -38,13 +38,13 @@ LOCALES =
 # translation
 SOURCES = \
 	__init__.py \
-	ags_2_db.py 
+	ags_tools.py 
 
-PLUGINNAME = ags_2_db
+PLUGINNAME = ags_tools
 
 PY_FILES = \
 	__init__.py \
-	ags_2_db.py 
+	ags_tools.py 
 
 UI_FILES = 
 
