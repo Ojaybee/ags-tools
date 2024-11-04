@@ -24,7 +24,7 @@
 
 __author__ = 'Oliver Burdekin / burdGIS'
 __date__ = '2023-04-19'
-__copyright__ = '(C) 2023 by Oliver Burdekin / burdGIS'
+__copyright__ = '(C) 2024 by Oliver Burdekin / burdGIS'
 
 # This will get replaced with a git SHA1 when you do a git archive
 
@@ -105,26 +105,6 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				defaultValue=QgsCoordinateReferenceSystem('EPSG:27700')
 			)
 		)
-	"""
-	def split_line(self, line):
-		fields = []
-		field = ''
-		in_quotes = False
-		for char in line:
-			if char == '"':
-				in_quotes = not in_quotes
-			elif char == ',':
-				if in_quotes:
-					field += char
-				else:
-					fields.append(field)
-					field = ''
-			else:
-				field += char
-		if field:
-			fields.append(field)
-		return fields
-		"""
 
 	def parse_ags_file(self, file_contents):
 		lines = file_contents.split('\n')
@@ -132,30 +112,6 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		current_group = None
 		headers = []
 
-		""" 		for line in lines:
-			if not line:
-				continue
-
-			values = line.strip().split(',')
-
-			if values[0] == '"GROUP"':
-				current_group = values[1].replace('"', '')
-				data[current_group] = []
-			elif values[0] == '"HEADING"':
-				headers = [header.replace('"', '') for header in values[1:]]
-			elif values[0] == '"UNIT"':
-				unit_values = [unit.replace('"', '') for unit in values[1:]]
-				if not any(unit_values):  # Skip empty UNIT rows
-					unit_values = None
-				else:
-					data[f"{current_group}_units"] = dict(zip(headers, unit_values))
-			elif values[0] == '"DATA"':
-				record = {}
-				for i, header in enumerate(headers):
-					record[header] = values[i + 1].replace('"', '')
-				data[current_group].append(record)
-
-		return data """
 		# Taken from the AGS4PY
 		for line in lines:
 			if not line:
