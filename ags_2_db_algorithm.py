@@ -112,7 +112,7 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		current_group = None
 		headers = []
 
-		# Taken from the AGS4PY
+		# Takenn from AGS4 py
 		for line in lines:
 			if not line:
 				continue
@@ -135,8 +135,34 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				record = dict(zip(headers, temp[1:]))
 				data[current_group].append(record)
 
-		return data
+    	# Detect column types for each group independently
+		column_types = {}
+		for group_name, records in data.items():
+			if group_name.endswith("_units"):
+				continue
 
+			if records:
+				# Use the first record's keys as headers for this group
+				group_headers = list(records[0].keys())
+				column_types[group_name] = {}
+				for header in group_headers:
+					all_numeric = all(self.is_numeric(record.get(header)) for record in records if record.get(header))
+					if all_numeric:
+						# If all values are numeric, use REAL type
+						column_types[group_name][header] = "REAL"
+					else:
+						# Otherwise, default to TEXT type
+						column_types[group_name][header] = "TEXT"
+
+		return data, column_types
+	
+	def is_numeric(self, value):
+		"""Utility function to check if value can be converted to a number."""
+		try:
+			float(value)
+			return True
+		except ValueError:
+			return False
 	
 	def read_ags_file(self, file_path):
 		with open(file_path, 'r') as file:
@@ -170,7 +196,7 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				values = [record[column] for column in columns]
 				insert_sql = f"INSERT INTO {group_name}_spatial ({', '.join(columns)}, geom) VALUES ({', '.join(['?' for _ in columns])}, NULL)"
 				cursor.execute(insert_sql, values)
-    
+
 	def processAlgorithm(self, parameters, context, feedback):
 		input_path = self.parameterAsFile(parameters, self.INPUT, context)
 		output_path = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
@@ -179,7 +205,7 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 
 		# Read and parse the .ags file
 		file_contents = self.read_ags_file(input_path)
-		parsed_data = self.parse_ags_file(file_contents)
+		parsed_data, column_type_map = self.parse_ags_file(file_contents)
 
 		# Save the parsed data to an SQLite database
 		if os.path.exists(output_path):
@@ -208,12 +234,13 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				cursor.execute(insert_sql, values)
 			else:
 				columns = list(records[0].keys())
-				column_type = "VARCHAR"
-				create_table_sql = f"CREATE TABLE {group_name} ({', '.join([f'{column} {column_type}' for column in columns])})"
+				# Use detected column types for table creation
+				# _, column_types = self.parse_ags_file(file_contents)  # Get the column types
+				create_table_sql = f"CREATE TABLE {group_name} ({', '.join([f'{column} {column_type_map[group_name].get(column, 'TEXT')}' for column in columns])})"
 				cursor.execute(create_table_sql)
 
 				for record in records:
-					values = [record[column] for column in columns]
+					values = [float(record[column]) if column_type_map[group_name][column] == 'REAL' and record[column] else record[column] for column in columns]
 					insert_sql = f"INSERT INTO {group_name} ({', '.join(columns)}) VALUES ({', '.join(['?' for _ in columns])})"
 					cursor.execute(insert_sql, values)
 
