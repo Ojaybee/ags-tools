@@ -92,6 +92,7 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 			QgsProcessingParameterFile(
 				self.INPUT,
 				self.tr('Input File'),
+				defaultValue=r'C:\Users\Oliver\Documents\_demo\ags-tools\Esholt.ags'
 			)
 		)
 
@@ -103,26 +104,18 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				self.OUTPUT,
 				self.tr('Output Geopackage'),
 				'Geopackage (*.gpkg)',
+				defaultValue=r'C:\Users\Oliver\Documents\_demo\ags-tools\_dev-testing\gpkg-testing\test.gpkg'
 			)
 		)
 
-		self.addParameter(
-			QgsProcessingParameterCrs(
-				self.CRS,
-				'Coordinate Reference System',
-				defaultValue=QgsCoordinateReferenceSystem('EPSG:27700')
-			)
-		)
-
-	def parse_ags_file(self, file_contents):
+	def parse_ags_file(file_contents):
 		lines = file_contents.split('\n')
 		data = {}
 		current_group = None
 		headers = []
 
-		# Takenn from AGS4 py
 		for line in lines:
-			if not line:
+			if not line.strip():
 				continue
 
 			temp = line.strip().split('","')
@@ -130,18 +123,22 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 
 			if temp[0] == 'GROUP':
 				current_group = temp[1]
-				data[current_group] = []
+				data[current_group] = []  # Initialize the group
 			elif temp[0] == 'HEADING':
 				headers = temp[1:]
 			elif temp[0] == 'UNIT':
-				unit_values = temp[1:]
-				if not any(unit_values):  # Skip empty UNIT rows
-					unit_values = None
-				else:
+				# Create a "_units" group for units, even if incomplete
+				if current_group and headers:
+					unit_values = temp[1:]
+					# Pad missing values with empty strings
+					if len(unit_values) < len(headers):
+						unit_values.extend([''] * (len(headers) - len(unit_values)))
 					data[f"{current_group}_units"] = dict(zip(headers, unit_values))
 			elif temp[0] == 'DATA':
-				record = dict(zip(headers, temp[1:]))
-				data[current_group].append(record)
+				# Add data rows to the current group
+				if current_group and headers:
+					record = dict(zip(headers, temp[1:]))
+					data[current_group].append(record)
 
 		# Detect column types for each group independently
 		column_types = {}
@@ -150,19 +147,14 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				continue
 
 			if records:
-				# Use the first record's keys as headers for this group
 				group_headers = list(records[0].keys())
 				column_types[group_name] = {}
 				for header in group_headers:
-					all_numeric = all(self.is_numeric(record.get(header)) for record in records if record.get(header))
-					if all_numeric:
-						# If all values are numeric, use REAL type
-						column_types[group_name][header] = "REAL"
-					else:
-						# Otherwise, default to TEXT type
-						column_types[group_name][header] = "TEXT"
+					all_numeric = all(is_numeric(record.get(header)) for record in records if record.get(header))
+					column_types[group_name][header] = "REAL" if all_numeric else "TEXT"
 
 		return data, column_types
+
 	
 	def is_numeric(self, value):
 		"""Utility function to check if value can be converted to a number."""
@@ -223,13 +215,22 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 			if not records:
 				continue  # Skip if no records
 
+			# Check if group_name exists in column_type_map
+			if group_name not in column_type_map:
+				raise KeyError(f"Group name '{group_name}' is missing in column_type_map")
+
 			# Define fields based on detected column types
 			fields = QgsFields()
 			for column in records[0].keys():
-				if column_type_map[group_name][column] == 'REAL':
+				if column not in column_type_map[group_name]:
+					raise KeyError(f"Column '{column}' not found in column_type_map[{group_name}]")
+				
+				column_type = column_type_map[group_name][column]
+				if column_type == 'REAL':
 					fields.append(QgsField(column, QVariant.Double))
 				else:
 					fields.append(QgsField(column, QVariant.String))
+
 
 		# Determine geometry type
 		if group_name == 'LOCA':
