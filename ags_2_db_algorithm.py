@@ -48,7 +48,9 @@ from qgis.core import (QgsApplication,
 					   QgsVectorFileWriter,
 					   QgsProject,
 					   QgsCoordinateTransform,
-					   QgsProcessingException
+					   QgsProcessingException,
+					   QgsDataSourceUri,
+					   QgsMapLayer,
 						)
 from qgis.utils import iface
 from io import StringIO
@@ -282,6 +284,8 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		return layer
 
 	def create_database_connection(self, output_path, feedback):
+		# Not working 20241206
+
 		# Extract the extension
 		base_name = os.path.splitext(os.path.basename(output_path))[0]
 		ext = os.path.splitext(output_path)[1].lower()
@@ -412,8 +416,6 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				feedback.reportError(f"Error writing group '{group_name}' to GeoPackage: {errorMessage}")
 
 			first_layer = False
-
-		self.create_database_connection(output_path, feedback)
 
 		return {self.OUTPUT: output_path}
 	
