@@ -51,6 +51,8 @@ from qgis.core import (QgsProcessing,
 					   QgsWkbTypes,
 					   QgsVectorFileWriter,
 					   QgsProject,
+					   QgsCoordinateTransformContext,
+					   QgsVectorLayerExporter
 						)
 from qgis.utils import iface
 from io import StringIO
@@ -96,6 +98,15 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 			)
 		)
 
+		self.addParameter(
+			QgsProcessingParameterCrs(
+				self.CRS,
+				'Coordinate Reference System',
+				defaultValue=QgsCoordinateReferenceSystem('EPSG:27700')
+			)
+		)
+
+
 		# We add a feature sink in which to store our processed features (this
 		# usually takes the form of a newly created vector layer when the
 		# algorithm is run in QGIS).
@@ -104,11 +115,21 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				self.OUTPUT,
 				self.tr('Output Geopackage'),
 				'Geopackage (*.gpkg)',
-				defaultValue=r'C:\Users\Oliver\Documents\_demo\ags-tools\_dev-testing\gpkg-testing\test.gpkg'
+				# defaultValue=r'C:\Users\Oliver\Documents\_demo\ags-tools\_dev-testing\gpkg-testing\test.gpkg'
 			)
 		)
 
-	def parse_ags_file(file_contents):
+
+	def parse_ags_file(self, file_contents):
+
+		def is_numeric(value):
+			"""Utility function to check if value can be converted to a number."""
+			try:
+				float(value)
+				return True
+			except ValueError:
+				return False
+
 		lines = file_contents.split('\n')
 		data = {}
 		current_group = None
@@ -127,12 +148,14 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 			elif temp[0] == 'HEADING':
 				headers = temp[1:]
 			elif temp[0] == 'UNIT':
-				# Create a "_units" group for units, even if incomplete
 				if current_group and headers:
 					unit_values = temp[1:]
 					# Pad missing values with empty strings
 					if len(unit_values) < len(headers):
 						unit_values.extend([''] * (len(headers) - len(unit_values)))
+					# Validate and skip invalid unit rows
+					if all(not value.strip() for value in unit_values):  # All empty or whitespace
+						continue
 					data[f"{current_group}_units"] = dict(zip(headers, unit_values))
 			elif temp[0] == 'DATA':
 				# Add data rows to the current group
@@ -155,160 +178,346 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 
 		return data, column_types
 
-	
-	def is_numeric(self, value):
-		"""Utility function to check if value can be converted to a number."""
-		try:
-			float(value)
-			return True
-		except ValueError:
-			return False
-	
-	def read_ags_file(self, file_path):
-		with open(file_path, 'r') as file:
-			file_contents = file.read()
 
-		return file_contents
-
-	def create_spatial_table_from_loca(self, cursor, group_name, records, x_column, y_column, srid):
-		columns = list(records[0].keys())
-		group_name = group_name.lower()
-		create_table_sql = f"CREATE TABLE {group_name}_spatial (id INTEGER PRIMARY KEY, geom GEOMETRY, {', '.join([f'{column} TEXT' for column in columns])})"
-		cursor.execute(create_table_sql)
-
-		register_sql = f"""
-		INSERT INTO geometry_columns (f_table_name, f_geometry_column, geometry_type, coord_dimension, srid, spatial_index_enabled)
-		VALUES ('{group_name}_spatial', 'geom', 1, 2, {srid}, 0)
+	def createLOCAFeatures(self, records, column_types, crs, feedback):
 		"""
-		cursor.execute(register_sql)
+		Create a memory point layer for LOCA features using available coordinate fields.
+		- Checks for LOCA_NATE/LOCA_NATN, LOCA_LOCX/LOCA_LOCY, LOCA_LAT/LOCA_LON in that order.
+		- Logs if features or all fail to have coordinates.
+		- Reprojects if using LAT/LON from EPSG:4326 to target CRS.
+		"""
+		# Determine which coordinate fields are present and use them in priority:
+		coord_priority = [
+			('LOCA_NATE', 'LOCA_NATN'),
+			('LOCA_LOCX', 'LOCA_LOCY'),
+			('LOCA_LAT', 'LOCA_LON')
+		]
+		
+		chosen_coords = None
+		for pair in coord_priority:
+			# Check if both fields exist
+			if all(p in column_types['LOCA'] for p in pair):
+				x_field, y_field = pair
+				# Check if there's at least one record with non-empty coordinates
+				has_data = False
+				for record in records:
+					x_val = record.get(x_field)
+					y_val = record.get(y_field)
+					if x_val and x_val.strip() != '' and y_val and y_val.strip() != '':
+						has_data = True
+						break
 
-		create_spatial_index_sql = f"SELECT CreateSpatialIndex('{group_name}_spatial', 'geom')"
-		cursor.execute(create_spatial_index_sql)
+				if has_data:
+					chosen_coords = pair
+					break
 
+		# Create the layer
+		layer = QgsVectorLayer("Point?crs={}".format(crs.authid()), "LOCA", "memory")
+		data_provider = layer.dataProvider()
+
+		# Add fields
+		fields = QgsFields()
+		for field_name, field_type in column_types['LOCA'].items():
+			qgis_field_type = QVariant.Double if field_type == "REAL" else QVariant.String
+			fields.append(QgsField(field_name, qgis_field_type))
+		data_provider.addAttributes(fields)
+		layer.updateFields()
+
+		if chosen_coords is None:
+			feedback.reportError("No recognized coordinate fields found in LOCA. Creating empty point layer.")
+			return layer
+
+		x_field, y_field = chosen_coords
+
+		# Set up coordinate transform if needed
+		# If we're using LAT/LON, we assume they're in EPSG:4326 and must transform to chosen CRS
+		transform = None
+		if chosen_coords == ('LOCA_LAT', 'LOCA_LON'):
+			source_crs = QgsCoordinateReferenceSystem('EPSG:4326')
+			transform = QgsCoordinateTransform(source_crs, crs, QgsProject.instance())
+
+		features_with_coords = 0
 		for record in records:
-			if record[x_column] and record[y_column]:
-				x = float(record[x_column])
-				y = float(record[y_column])
-				values = [record[column] for column in columns]
-				insert_sql = f"INSERT INTO {group_name}_spatial ({', '.join(columns)}, geom) VALUES ({', '.join(['?' for _ in columns])}, MakePoint(?, ?, {srid}))"
-				cursor.execute(insert_sql, (*values, x, y))
+			# Get attributes
+			attrs = []
+			for header, ftype in column_types['LOCA'].items():
+				val = record.get(header)
+				if ftype == "REAL":
+					if val is None or val.strip() == '':
+						attrs.append(None)
+					else:
+						attrs.append(float(val))
+				else:
+					attrs.append(val if val is not None else None)
+
+			# Attempt to get coordinates
+			x_val = record.get(x_field)
+			y_val = record.get(y_field)
+			if x_val is None or x_val.strip() == '' or y_val is None or y_val.strip() == '':
+				# No coordinates for this feature
+				feedback.pushInfo(f"LOCA feature missing coordinates: {record}")
+				# We still add the feature but without geometry
+				# If you'd prefer to skip these, comment out the addFeature line.
+				f = QgsFeature()
+				f.setAttributes(attrs)
+				data_provider.addFeature(f)
+				continue
+
+			# Convert to float
+			x = float(x_val)
+			y = float(y_val)
+
+			# Transform if LAT/LON
+			if transform:
+				pt = transform.transform(QgsPointXY(y, x))  # careful with order: LAT = Y, LON = X
 			else:
-				values = [record[column] for column in columns]
-				insert_sql = f"INSERT INTO {group_name}_spatial ({', '.join(columns)}, geom) VALUES ({', '.join(['?' for _ in columns])}, NULL)"
-				cursor.execute(insert_sql, values)
+				pt = QgsPointXY(x, y)
+
+			f = QgsFeature()
+			f.setAttributes(attrs)
+			f.setGeometry(QgsGeometry.fromPointXY(pt))
+			data_provider.addFeature(f)
+			features_with_coords += 1
+
+		layer.updateExtents()
+
+		if features_with_coords == 0:
+			feedback.reportError("No LOCA features had valid coordinates. The LOCA layer will have no geometries.")
+
+		return layer
+
+	
+
+	
+
+
 
 	def processAlgorithm(self, parameters, context, feedback):
-		input_path = self.parameterAsFile(parameters, self.INPUT, context)
+		# Define the output path
 		output_path = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
-		crs = self.parameterAsCrs(parameters, self.CRS, context)
-
-		# Read and parse the .ags file
-		file_contents = self.read_ags_file(input_path)
-		parsed_data, column_type_map = self.parse_ags_file(file_contents)
+		feedback.pushInfo(f"Writing all groups GeoPackage to: {output_path}")
 
 		# Remove existing GeoPackage if it exists
 		if os.path.exists(output_path):
 			os.remove(output_path)
+			feedback.pushInfo(f"Removed existing GeoPackage at: {output_path}")
 
-		# Process each group and create layers
-		for group_name, records in parsed_data.items():
-			if not records:
-				continue  # Skip if no records
+		# Load AGS4 file contents
+		ags_file_path = self.parameterAsFile(parameters, self.INPUT, context)
+		with open(ags_file_path, 'r') as ags_file:
+			file_contents = ags_file.read()
 
-			# Check if group_name exists in column_type_map
-			if group_name not in column_type_map:
-				raise KeyError(f"Group name '{group_name}' is missing in column_type_map")
+		# Get chosen CRS
+		crs = self.parameterAsCrs(parameters, self.CRS, context)
 
-			# Define fields based on detected column types
-			fields = QgsFields()
-			for column in records[0].keys():
-				if column not in column_type_map[group_name]:
-					raise KeyError(f"Column '{column}' not found in column_type_map[{group_name}]")
-				
-				column_type = column_type_map[group_name][column]
-				if column_type == 'REAL':
-					fields.append(QgsField(column, QVariant.Double))
-				else:
-					fields.append(QgsField(column, QVariant.String))
+		# Parse the AGS file
+		data, column_types = self.parse_ags_file(file_contents)
 
+		first_layer = True
+		transform_context = context.transformContext()
 
-		# Determine geometry type
-		if group_name == 'LOCA':
-			geometry_type = QgsWkbTypes.Point
-			layer_crs = crs
-		else:
-			geometry_type = QgsWkbTypes.NoGeometry
-			layer_crs = None
+		for group_name, records in data.items():
+			if group_name.endswith("_units"):
+				continue  # Skip unit tables
 
-		# Create an in-memory layer
-		layer = QgsVectorLayer(
-			f'{QgsWkbTypes.displayString(geometry_type)}?crs={layer_crs.authid() if layer_crs else ""}',
-			group_name,
-			'memory'
-		)
-		layer.dataProvider().addAttributes(fields)
-		layer.updateFields()
+			feedback.pushInfo(f"Processing group: {group_name}")
 
-		# Create features
-		features = []
-		for record in records:
-			feature = QgsFeature()
-			feature.setFields(fields)
-			for column in record:
-				value = record[column]
-				if column_type_map[group_name][column] == 'REAL' and value:
-					feature[column] = float(value)
-				else:
-					feature[column] = value
+			if group_name.upper() == "LOCA":
+				# Create spatial LOCA layer
+				layer = self.createLOCAFeatures(records, column_types, crs, feedback)
+				# layer = QgsVectorLayer("Point?crs=EPSG:4326", group_name, "memory")
+				# geometry_type = QgsWkbTypes.Point
+			else:
+				# Non-spatial layer
+				layer = QgsVectorLayer("NoGeometry", group_name, "memory")
+				data_provider = layer.dataProvider()
 
-			# Set geometry for spatial layers
-			if group_name == 'LOCA' and record.get('LOCA_NATE') and record.get('LOCA_NATN'):
-				try:
-					x = float(record['LOCA_NATE'])
-					y = float(record['LOCA_NATN'])
-					point = QgsGeometry.fromPointXY(QgsPointXY(x, y))
-					feature.setGeometry(point)
-				except ValueError:
-					pass  # Handle invalid coordinate values
+				# Add fields
+				fields = QgsFields()
+				for field_name, field_type in column_types[group_name].items():
+					qgis_field_type = QVariant.Double if field_type == "REAL" else QVariant.String
+					fields.append(QgsField(field_name, qgis_field_type))
+				data_provider.addAttributes(fields)
+				layer.updateFields()
 
-			features.append(feature)
+				# Populate layer
+				for record in records:
+					feature = QgsFeature()
+					attrs = []
+					for header, ftype in column_types[group_name].items():
+						val = record.get(header)
+						if ftype == "REAL":
+							if val is None or val.strip() == '':
+								attrs.append(None)
+							else:
+								attrs.append(float(val))
+						else:
+							attrs.append(val if val is not None else None)
+					feature.setAttributes(attrs)
+					data_provider.addFeature(feature)
+				layer.updateExtents()
 
-		# Add features to the layer
-		layer.dataProvider().addFeatures(features)
+			# Export layer
+			options = QgsVectorFileWriter.SaveVectorOptions()
+			options.driverName = "GPKG"
+			options.layerName = group_name
+			options.fileEncoding = "UTF-8"
+			# Geometry type will be derived automatically for V3 method
 
-		# Prepare options for writing to GeoPackage
-		options = QgsVectorFileWriter.SaveVectorOptions()
-		options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
-		options.driverName = 'GPKG'
-		options.layerName = group_name
-		options.fileEncoding = 'UTF-8'
+			if first_layer:
+				options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteFile
+			else:
+				options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
 
-		if geometry_type != QgsWkbTypes.NoGeometry:
-			options.layerOptions = [f'SRID={crs.authid().split(":")[1]}']
-		else:
-			options.layerOptions = ['GEOMETRY=None']
+			error, newFilename, newLayer, errorMessage = QgsVectorFileWriter.writeAsVectorFormatV3(
+				layer,
+				output_path,
+				transform_context,
+				options
+			)
 
-		# Write the layer to the GeoPackage
-		error = QgsVectorFileWriter.writeAsVectorFormatV2(
-			layer,
-			output_path,
-			context.transformContext(),
-			options
-		)
+			if error == QgsVectorFileWriter.NoError:
+				feedback.pushInfo(f"Successfully wrote group '{group_name}' to GeoPackage.")
+			else:
+				feedback.reportError(f"Error writing group '{group_name}' to GeoPackage: {errorMessage}")
 
-		if error[0] != QgsVectorFileWriter.NoError:
-			feedback.reportError(f'Error writing {group_name} to GeoPackage: {error[1]}')
+			first_layer = False
 
-		# Load the 'LOCA' layer into QGIS
-		loca_layer_uri = f'{output_path}|layername=LOCA'
-		loca_layer = QgsVectorLayer(loca_layer_uri, 'LOCA', 'ogr')
-		if not loca_layer.isValid():
-			feedback.reportError('Failed to load LOCA layer')
-		else:
-			QgsProject.instance().addMapLayer(loca_layer)
-			# Apply style if needed
-		# Return the output path
 		return {self.OUTPUT: output_path}
+
+
+
+
+
+
+
+
+	
+	
+	###
+	# Old processAlgorithm. More complex but not working as intended
+	###
+
+	# def processAlgorithm(self, parameters, context, feedback):
+	# 	input_path = self.parameterAsFile(parameters, self.INPUT, context)
+	# 	output_path = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
+	# 	crs = self.parameterAsCrs(parameters, self.CRS, context)
+
+	# 	# Read and parse the .ags file
+	# 	file_contents = self.read_ags_file(input_path)
+	# 	parsed_data, column_type_map = self.parse_ags_file(file_contents)
+
+	# 	# Remove existing GeoPackage if it exists
+	# 	if os.path.exists(output_path):
+	# 		os.remove(output_path)
+
+	# 	# Process each group and create layers
+	# 	for group_name, records in parsed_data.items():
+	# 		if not records:
+	# 			continue  # Skip if no records
+
+
+
+	# 		# Check if group_name exists in column_type_map
+	# 		if group_name.endswith("_units") or group_name not in column_type_map:
+	# 			feedback.pushInfo(f"Group name '{group_name}' is missing in column_type_map")
+	# 			continue
+
+	# 		# Define fields based on detected column types
+	# 		fields = QgsFields()
+	# 		for column in records[0].keys():
+	# 			if column not in column_type_map[group_name]:
+	# 				raise KeyError(f"Column '{column}' not found in column_type_map[{group_name}]")
+				
+	# 			column_type = column_type_map[group_name][column]
+	# 			if column_type == 'REAL':
+	# 				fields.append(QgsField(column, QVariant.Double))
+	# 			else:
+	# 				fields.append(QgsField(column, QVariant.String))
+
+
+	# 	# Determine geometry type
+	# 	if group_name == 'LOCA':
+	# 		geometry_type = QgsWkbTypes.Point
+	# 		layer_crs = crs
+	# 	else:
+	# 		geometry_type = QgsWkbTypes.NoGeometry
+	# 		layer_crs = None
+
+	# 	# Create an in-memory layer
+	# 	layer = QgsVectorLayer(
+	# 		f'{QgsWkbTypes.displayString(geometry_type)}?crs={layer_crs.authid() if layer_crs else ""}',
+	# 		group_name,
+	# 		'memory'
+	# 	)
+	# 	layer.dataProvider().addAttributes(fields)
+	# 	layer.updateFields()
+
+	# 	# Create features
+	# 	features = []
+	# 	for record in records:
+
+	# 		if not isinstance(record, dict):
+	# 			feedback.reportError(f"Invalid record in group '{group_name}': {record}")
+	# 			continue  # Skip invalid records
+
+	# 		feature = QgsFeature()
+	# 		feature.setFields(fields)
+	# 		for column in record:
+	# 			value = record[column]
+	# 			if column_type_map[group_name][column] == 'REAL' and value:
+	# 				feature[column] = float(value)
+	# 			else:
+	# 				feature[column] = value
+
+	# 		# Set geometry for spatial layers
+	# 		if group_name == 'LOCA' and record.get('LOCA_NATE') and record.get('LOCA_NATN'):
+	# 			try:
+	# 				x = float(record['LOCA_NATE'])
+	# 				y = float(record['LOCA_NATN'])
+	# 				point = QgsGeometry.fromPointXY(QgsPointXY(x, y))
+	# 				feature.setGeometry(point)
+	# 			except ValueError:
+	# 				pass  # Handle invalid coordinate values
+
+	# 		features.append(feature)
+
+	# 	# Add features to the layer
+	# 	layer.dataProvider().addFeatures(features)
+
+	# 	# Prepare options for writing to GeoPackage
+	# 	options = QgsVectorFileWriter.SaveVectorOptions()
+	# 	options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+	# 	options.driverName = 'GPKG'
+	# 	options.layerName = group_name
+	# 	options.fileEncoding = 'UTF-8'
+
+	# 	if geometry_type != QgsWkbTypes.NoGeometry:
+	# 		options.layerOptions = [f'SRID={crs.authid().split(":")[1]}']
+	# 	else:
+	# 		options.layerOptions = ['GEOMETRY=None']
+
+	# 	# Write the layer to the GeoPackage
+	# 	error = QgsVectorFileWriter.writeAsVectorFormatV3(
+	# 		layer,
+	# 		output_path,
+	# 		context.transformContext(),
+	# 		options
+	# 	)
+
+	# 	if error[0] != QgsVectorFileWriter.NoError:
+	# 		feedback.reportError(f'Error writing {group_name} to GeoPackage: {error[1]}')
+
+	# 	# Load the 'LOCA' layer into QGIS
+	# 	loca_layer_uri = f'{output_path}|layername=LOCA'
+	# 	loca_layer = QgsVectorLayer(loca_layer_uri, 'LOCA', 'ogr')
+	# 	if not loca_layer.isValid():
+	# 		feedback.reportError('Failed to load LOCA layer')
+	# 	else:
+	# 		QgsProject.instance().addMapLayer(loca_layer)
+	# 		# Apply style if needed
+	# 	# Return the output path
+	# 	return {self.OUTPUT: output_path}
 	
 	def processing_log(self, message):
 		"""
