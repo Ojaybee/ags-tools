@@ -30,7 +30,7 @@ __copyright__ = '(C) 2024 by Oliver Burdekin / burdGIS'
 
 __revision__ = '$Format:%H$'
 
-from qgis.PyQt.QtCore import QCoreApplication, QSettings
+from qgis.PyQt.QtCore import QCoreApplication, QSettings, QVariant
 from qgis.core import (QgsProcessing,
 					   QgsFeatureSink,
 					   QgsApplication,
@@ -42,11 +42,19 @@ from qgis.core import (QgsProcessing,
 					   QgsCoordinateReferenceSystem,
 					   QgsDataSourceUri,
 					   QgsVectorLayer,
-					   QgsProject
+					   QgsVectorLayer,
+					   QgsField,
+					   QgsFields,
+					   QgsFeature,
+					   QgsGeometry,
+					   QgsPointXY,
+					   QgsWkbTypes,
+					   QgsVectorFileWriter,
+					   QgsProject,
 						)
 from qgis.utils import iface
 from io import StringIO
-import sqlite3
+# import sqlite3
 import os
 
 
@@ -93,8 +101,8 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		self.addParameter(
 			QgsProcessingParameterFileDestination(
 				self.OUTPUT,
-				self.tr('Output Database'),
-				'SpatiaLite Database (*.db)',
+				self.tr('Output Geopackage'),
+				'Geopackage (*.gpkg)',
 			)
 		)
 
@@ -135,7 +143,7 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				record = dict(zip(headers, temp[1:]))
 				data[current_group].append(record)
 
-    	# Detect column types for each group independently
+		# Detect column types for each group independently
 		column_types = {}
 		for group_name, records in data.items():
 			if group_name.endswith("_units"):
@@ -201,154 +209,104 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		input_path = self.parameterAsFile(parameters, self.INPUT, context)
 		output_path = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
 		crs = self.parameterAsCrs(parameters, self.CRS, context)
-		database_name = os.path.splitext(os.path.basename(output_path))[0]
 
 		# Read and parse the .ags file
 		file_contents = self.read_ags_file(input_path)
 		parsed_data, column_type_map = self.parse_ags_file(file_contents)
 
-		# Save the parsed data to an SQLite database
+		# Remove existing GeoPackage if it exists
 		if os.path.exists(output_path):
 			os.remove(output_path)
 
-		conn = sqlite3.connect(output_path)
-		conn.enable_load_extension(True)
-		# You may need to modify the path to the mod_spatialite library depending on your system
-		conn.load_extension("mod_spatialite")
-		# Initialize the SpatiaLite metadata tables
-		cursor = conn.cursor()
-		cursor.execute("SELECT InitSpatialMetadata(1)")
-
-		# Process the parsed_data and create tables in the SQLite database
+		# Process each group and create layers
 		for group_name, records in parsed_data.items():
-			print(f"Processing group {group_name}: {len(records)} records")  # Add this print statement
+			if not records:
+				continue  # Skip if no records
 
-			if group_name.endswith("_units"):
-				columns = list(records.keys())
-				column_types = ["TEXT"] * len(columns)
-				create_table_sql = f"CREATE TABLE {group_name} ({', '.join([f'{column} {column_type}' for column, column_type in zip(columns, column_types)])})"
-				cursor.execute(create_table_sql)
+			# Define fields based on detected column types
+			fields = QgsFields()
+			for column in records[0].keys():
+				if column_type_map[group_name][column] == 'REAL':
+					fields.append(QgsField(column, QVariant.Double))
+				else:
+					fields.append(QgsField(column, QVariant.String))
 
-				values = list(records.values())
-				insert_sql = f"INSERT INTO {group_name} ({', '.join(columns)}) VALUES ({', '.join(['?' for _ in columns])})"
-				cursor.execute(insert_sql, values)
-			else:
-				columns = list(records[0].keys())
-				# Use detected column types for table creation
-				# _, column_types = self.parse_ags_file(file_contents)  # Get the column types
-				create_table_sql = f"CREATE TABLE {group_name} ({', '.join([f'{column} {column_type_map[group_name].get(column, 'TEXT')}' for column in columns])})"
-				cursor.execute(create_table_sql)
-
-				for record in records:
-					values = [float(record[column]) if column_type_map[group_name][column] == 'REAL' and record[column] else record[column] for column in columns]
-					insert_sql = f"INSERT INTO {group_name} ({', '.join(columns)}) VALUES ({', '.join(['?' for _ in columns])})"
-					cursor.execute(insert_sql, values)
-
-			if group_name == 'LOCA':  # Assuming LOCA is the group name containing the spatial data
-				x_column = "LOCA_NATE"
-				y_column = "LOCA_NATN"
-				# Replace 0 with the appropriate SRID (Spatial Reference ID) for your data
-				crs = parameters['CRS']
-				epsg_code = crs.authid().split(":")[1] # Extract the EPSG code
-				srid = int(epsg_code) # Convert the code to an integer
-
-				self.create_spatial_table_from_loca(cursor, group_name, records, x_column, y_column, srid)
-
-
-		conn.commit()
-		conn.close()
-
-
-
-		
-		# Get the absolute path to your SVG symbols
-		svg_path = os.path.join(os.path.dirname(__file__), 'styles', 'svg')
-
-		# Add this path to QGIS's SVG paths
-		svg_paths = QgsApplication.svgPaths()
-		if svg_path not in svg_paths:
-			svg_paths.append(svg_path)
-			QgsApplication.setDefaultSvgPaths(svg_paths)
-
-		# Now, when you add your layer, apply the QML style
-		qml_path = os.path.join(os.path.dirname(__file__), 'styles', 'loca_spatial.qml')
-
-		# Add layer to the map
-		uri = QgsDataSourceUri()
-		uri.setDatabase(output_path)
-		schema = ''
-		table = 'loca_spatial'
-		geom_column = 'geom'  # Assuming the geometry column in your spatial table is named 'geom'
-		uri.setDataSource(schema, table, geom_column)
-
-		layer = QgsVectorLayer(uri.uri(), table, "spatialite")
-		if not layer.isValid():
-			print("Layer failed to load!")
+		# Determine geometry type
+		if group_name == 'LOCA':
+			geometry_type = QgsWkbTypes.Point
+			layer_crs = crs
 		else:
-			QgsProject.instance().addMapLayer(layer)
+			geometry_type = QgsWkbTypes.NoGeometry
+			layer_crs = None
 
-		# Check if layer is a vector layer
-		if layer.type() == QgsMapLayer.VectorLayer:
-			layer.loadNamedStyle(qml_path)
+		# Create an in-memory layer
+		layer = QgsVectorLayer(
+			f'{QgsWkbTypes.displayString(geometry_type)}?crs={layer_crs.authid() if layer_crs else ""}',
+			group_name,
+			'memory'
+		)
+		layer.dataProvider().addAttributes(fields)
+		layer.updateFields()
 
-		# Finally, trigger a refresh so QGIS knows to apply the new styles
-		layer.triggerRepaint()
-		iface.layerTreeView().refreshLayerSymbology(layer.id())
+		# Create features
+		features = []
+		for record in records:
+			feature = QgsFeature()
+			feature.setFields(fields)
+			for column in record:
+				value = record[column]
+				if column_type_map[group_name][column] == 'REAL' and value:
+					feature[column] = float(value)
+				else:
+					feature[column] = value
 
+			# Set geometry for spatial layers
+			if group_name == 'LOCA' and record.get('LOCA_NATE') and record.get('LOCA_NATN'):
+				try:
+					x = float(record['LOCA_NATE'])
+					y = float(record['LOCA_NATN'])
+					point = QgsGeometry.fromPointXY(QgsPointXY(x, y))
+					feature.setGeometry(point)
+				except ValueError:
+					pass  # Handle invalid coordinate values
 
-		# Add database connection to QGIS automatically
-		settings = QSettings()
-		settings.beginGroup('/SpatiaLite/connections/')
-		settings.beginGroup(database_name)  # Replace 'MyConnection' with the name you want for the connection
-		settings.setValue('sqlitepath', output_path)  # Replace 'output_path' with the path to your SQLite database
-		settings.endGroup()
-		settings.endGroup()
+			features.append(feature)
 
-		# Refresh database connections in the Browser Panel
-		iface.browserModel().refresh()
+		# Add features to the layer
+		layer.dataProvider().addFeatures(features)
 
-		# Save SQL query
-		query_name = 'asbestos'  # Replace with the appropriate name for your query
-		sql_query = '''
-		
-		SELECT
-			ls.LOCA_ID,
-			ls.geom,
-			e.ERES_NAME,
-			e.ERES_RTXT,
-			CAST(e.SAMP_TOP AS FLOAT) AS SAMP_TOP,
-			e.SAMP_ID,
-			(
-				SELECT
-					CASE
-						WHEN TRIM(g.GEOL_FORM) = '' THEN g.GEOL_TOP || '-' || g.GEOL_BASE
-						ELSE g.GEOL_FORM
-					END
-				FROM
-					GEOL g
-				WHERE
-					g.LOCA_ID = e.LOCA_ID
-					AND CAST(e.SAMP_TOP AS FLOAT) >= CAST(g.GEOL_TOP AS FLOAT)
-					AND CAST(e.SAMP_TOP AS FLOAT) < CAST(g.GEOL_BASE AS FLOAT)
-				LIMIT 1
-			) AS GEOL_FORM
-		FROM
-			ERES e
-		JOIN
-			loca_spatial ls ON e.LOCA_ID = ls.LOCA_ID
-		WHERE
-			(LOWER(e.ERES_NAME) LIKE '%asbestos%' OR e.ERES_CODE = '1332-21-4')
-		ORDER BY ls.LOCA_ID; 
-		
-				'''  # Replace with your SQL query
+		# Prepare options for writing to GeoPackage
+		options = QgsVectorFileWriter.SaveVectorOptions()
+		options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+		options.driverName = 'GPKG'
+		options.layerName = group_name
+		options.fileEncoding = 'UTF-8'
 
-		settings.beginGroup('/DB_Manager/query')
-		query_name_with_prefix = f'ags_{query_name}'
+		if geometry_type != QgsWkbTypes.NoGeometry:
+			options.layerOptions = [f'SRID={crs.authid().split(":")[1]}']
+		else:
+			options.layerOptions = ['GEOMETRY=None']
 
-		if not settings.contains(query_name_with_prefix):
-			settings.setValue(query_name_with_prefix, sql_query)
-		settings.endGroup()	
+		# Write the layer to the GeoPackage
+		error = QgsVectorFileWriter.writeAsVectorFormatV2(
+			layer,
+			output_path,
+			context.transformContext(),
+			options
+		)
 
+		if error[0] != QgsVectorFileWriter.NoError:
+			feedback.reportError(f'Error writing {group_name} to GeoPackage: {error[1]}')
+
+		# Load the 'LOCA' layer into QGIS
+		loca_layer_uri = f'{output_path}|layername=LOCA'
+		loca_layer = QgsVectorLayer(loca_layer_uri, 'LOCA', 'ogr')
+		if not loca_layer.isValid():
+			feedback.reportError('Failed to load LOCA layer')
+		else:
+			QgsProject.instance().addMapLayer(loca_layer)
+			# Apply style if needed
+		# Return the output path
 		return {self.OUTPUT: output_path}
 	
 	def processing_log(self, message):
