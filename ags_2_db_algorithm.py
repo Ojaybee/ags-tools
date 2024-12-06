@@ -31,16 +31,13 @@ __copyright__ = '(C) 2024 by Oliver Burdekin / burdGIS'
 __revision__ = '$Format:%H$'
 
 from qgis.PyQt.QtCore import QCoreApplication, QSettings, QVariant
-from qgis.core import (QgsProcessing,
-					   QgsFeatureSink,
-					   QgsApplication,
-					   QgsMapLayer,
+from qgis.core import (QgsApplication,
+					   QgsSettings,
 					   QgsProcessingAlgorithm,
 					   QgsProcessingParameterFile,
 					   QgsProcessingParameterFileDestination,
 					   QgsProcessingParameterCrs,
 					   QgsCoordinateReferenceSystem,
-					   QgsDataSourceUri,
 					   QgsVectorLayer,
 					   QgsVectorLayer,
 					   QgsField,
@@ -48,11 +45,10 @@ from qgis.core import (QgsProcessing,
 					   QgsFeature,
 					   QgsGeometry,
 					   QgsPointXY,
-					   QgsWkbTypes,
 					   QgsVectorFileWriter,
 					   QgsProject,
-					   QgsCoordinateTransformContext,
-					   QgsVectorLayerExporter
+					   QgsCoordinateTransform,
+					   QgsProcessingException
 						)
 from qgis.utils import iface
 from io import StringIO
@@ -113,12 +109,11 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		self.addParameter(
 			QgsProcessingParameterFileDestination(
 				self.OUTPUT,
-				self.tr('Output Geopackage'),
-				'Geopackage (*.gpkg)',
+				self.tr('Output File'),
+				fileFilter='GeoPackage (*.gpkg);;SpatiaLite (*.sqlite)'
 				# defaultValue=r'C:\Users\Oliver\Documents\_demo\ags-tools\_dev-testing\gpkg-testing\test.gpkg'
 			)
 		)
-
 
 	def parse_ags_file(self, file_contents):
 
@@ -177,7 +172,6 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 					column_types[group_name][header] = "REAL" if all_numeric else "TEXT"
 
 		return data, column_types
-
 
 	def createLOCAFeatures(self, records, column_types, crs, feedback):
 		"""
@@ -260,6 +254,7 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				# If you'd prefer to skip these, comment out the addFeature line.
 				f = QgsFeature()
 				f.setAttributes(attrs)
+				f.setGeometry(None)
 				data_provider.addFeature(f)
 				continue
 
@@ -286,15 +281,42 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 
 		return layer
 
-	
+	def create_database_connection(self, output_path, feedback):
+		# Extract the extension
+		base_name = os.path.splitext(os.path.basename(output_path))[0]
+		ext = os.path.splitext(output_path)[1].lower()
 
-	
+		# Generate a connection name
+		connection_name = base_name
 
+		settings = QgsSettings()
+
+		if ext == '.gpkg':
+			# Create a GeoPackage connection
+			# The 'database' key stores the file path
+			settings.setValue(f"Qgis/connections/geopackage/{connection_name}/database", output_path)
+			# Optionally store if this connection is project-specific
+			settings.setValue(f"Qgis/connections/geopackage/{connection_name}/Project", False)
+			feedback.pushInfo(f"Created GeoPackage connection '{connection_name}' for {output_path}")
+
+		elif ext in ['.db', '.sqlite']:
+			# Create a Spatialite connection
+			settings.setValue(f"Qgis/connections/spatialite/{connection_name}/database", output_path)
+			settings.setValue(f"Qgis/connections/spatialite/{connection_name}/Project", False)
+			feedback.pushInfo(f"Created Spatialite connection '{connection_name}' for {output_path}")
+		else:
+			feedback.reportError("Unsupported file extension for connection creation.")
+			return
+
+		# After this, you may need to refresh the QGIS Browser panel for the connection to appear.
+		# This can be done by:
+		# iface.refreshDataStores()
 
 
 	def processAlgorithm(self, parameters, context, feedback):
 		# Define the output path
 		output_path = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
+		ext = os.path.splitext(output_path)[1].lower()
 		feedback.pushInfo(f"Writing all groups GeoPackage to: {output_path}")
 
 		# Remove existing GeoPackage if it exists
@@ -360,6 +382,14 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 			# Export layer
 			options = QgsVectorFileWriter.SaveVectorOptions()
 			options.driverName = "GPKG"
+			if ext == '.gpkg':
+				options.driverName = "GPKG"
+			elif ext == '.sqlite':
+				options.driverName = "SQLite"
+				options.driverOptions = ["SPATIALITE=YES"]
+			else:
+				raise QgsProcessingException("Unsupported file format selected.")
+
 			options.layerName = group_name
 			options.fileEncoding = "UTF-8"
 			# Geometry type will be derived automatically for V3 method
@@ -383,141 +413,9 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 
 			first_layer = False
 
+		self.create_database_connection(output_path, feedback)
+
 		return {self.OUTPUT: output_path}
-
-
-
-
-
-
-
-
-	
-	
-	###
-	# Old processAlgorithm. More complex but not working as intended
-	###
-
-	# def processAlgorithm(self, parameters, context, feedback):
-	# 	input_path = self.parameterAsFile(parameters, self.INPUT, context)
-	# 	output_path = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
-	# 	crs = self.parameterAsCrs(parameters, self.CRS, context)
-
-	# 	# Read and parse the .ags file
-	# 	file_contents = self.read_ags_file(input_path)
-	# 	parsed_data, column_type_map = self.parse_ags_file(file_contents)
-
-	# 	# Remove existing GeoPackage if it exists
-	# 	if os.path.exists(output_path):
-	# 		os.remove(output_path)
-
-	# 	# Process each group and create layers
-	# 	for group_name, records in parsed_data.items():
-	# 		if not records:
-	# 			continue  # Skip if no records
-
-
-
-	# 		# Check if group_name exists in column_type_map
-	# 		if group_name.endswith("_units") or group_name not in column_type_map:
-	# 			feedback.pushInfo(f"Group name '{group_name}' is missing in column_type_map")
-	# 			continue
-
-	# 		# Define fields based on detected column types
-	# 		fields = QgsFields()
-	# 		for column in records[0].keys():
-	# 			if column not in column_type_map[group_name]:
-	# 				raise KeyError(f"Column '{column}' not found in column_type_map[{group_name}]")
-				
-	# 			column_type = column_type_map[group_name][column]
-	# 			if column_type == 'REAL':
-	# 				fields.append(QgsField(column, QVariant.Double))
-	# 			else:
-	# 				fields.append(QgsField(column, QVariant.String))
-
-
-	# 	# Determine geometry type
-	# 	if group_name == 'LOCA':
-	# 		geometry_type = QgsWkbTypes.Point
-	# 		layer_crs = crs
-	# 	else:
-	# 		geometry_type = QgsWkbTypes.NoGeometry
-	# 		layer_crs = None
-
-	# 	# Create an in-memory layer
-	# 	layer = QgsVectorLayer(
-	# 		f'{QgsWkbTypes.displayString(geometry_type)}?crs={layer_crs.authid() if layer_crs else ""}',
-	# 		group_name,
-	# 		'memory'
-	# 	)
-	# 	layer.dataProvider().addAttributes(fields)
-	# 	layer.updateFields()
-
-	# 	# Create features
-	# 	features = []
-	# 	for record in records:
-
-	# 		if not isinstance(record, dict):
-	# 			feedback.reportError(f"Invalid record in group '{group_name}': {record}")
-	# 			continue  # Skip invalid records
-
-	# 		feature = QgsFeature()
-	# 		feature.setFields(fields)
-	# 		for column in record:
-	# 			value = record[column]
-	# 			if column_type_map[group_name][column] == 'REAL' and value:
-	# 				feature[column] = float(value)
-	# 			else:
-	# 				feature[column] = value
-
-	# 		# Set geometry for spatial layers
-	# 		if group_name == 'LOCA' and record.get('LOCA_NATE') and record.get('LOCA_NATN'):
-	# 			try:
-	# 				x = float(record['LOCA_NATE'])
-	# 				y = float(record['LOCA_NATN'])
-	# 				point = QgsGeometry.fromPointXY(QgsPointXY(x, y))
-	# 				feature.setGeometry(point)
-	# 			except ValueError:
-	# 				pass  # Handle invalid coordinate values
-
-	# 		features.append(feature)
-
-	# 	# Add features to the layer
-	# 	layer.dataProvider().addFeatures(features)
-
-	# 	# Prepare options for writing to GeoPackage
-	# 	options = QgsVectorFileWriter.SaveVectorOptions()
-	# 	options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
-	# 	options.driverName = 'GPKG'
-	# 	options.layerName = group_name
-	# 	options.fileEncoding = 'UTF-8'
-
-	# 	if geometry_type != QgsWkbTypes.NoGeometry:
-	# 		options.layerOptions = [f'SRID={crs.authid().split(":")[1]}']
-	# 	else:
-	# 		options.layerOptions = ['GEOMETRY=None']
-
-	# 	# Write the layer to the GeoPackage
-	# 	error = QgsVectorFileWriter.writeAsVectorFormatV3(
-	# 		layer,
-	# 		output_path,
-	# 		context.transformContext(),
-	# 		options
-	# 	)
-
-	# 	if error[0] != QgsVectorFileWriter.NoError:
-	# 		feedback.reportError(f'Error writing {group_name} to GeoPackage: {error[1]}')
-
-	# 	# Load the 'LOCA' layer into QGIS
-	# 	loca_layer_uri = f'{output_path}|layername=LOCA'
-	# 	loca_layer = QgsVectorLayer(loca_layer_uri, 'LOCA', 'ogr')
-	# 	if not loca_layer.isValid():
-	# 		feedback.reportError('Failed to load LOCA layer')
-	# 	else:
-	# 		QgsProject.instance().addMapLayer(loca_layer)
-	# 		# Apply style if needed
-	# 	# Return the output path
-	# 	return {self.OUTPUT: output_path}
 	
 	def processing_log(self, message):
 		"""
