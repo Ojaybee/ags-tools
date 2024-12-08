@@ -51,6 +51,7 @@ from qgis.core import (QgsApplication,
 					   QgsProcessingException,
 					   QgsDataSourceUri,
 					   QgsMapLayer,
+					   QgsProviderRegistry
 						)
 from qgis.utils import iface
 from io import StringIO
@@ -284,37 +285,20 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		return layer
 
 	def create_database_connection(self, output_path, feedback):
-		# Not working 20241206
 
-		# Extract the extension
-		base_name = os.path.splitext(os.path.basename(output_path))[0]
-		ext = os.path.splitext(output_path)[1].lower()
+		md = QgsProviderRegistry.instance().providerMetadata("ogr")
+		conn = md.createConnection(output_path, {})
+		conn_name = os.path.splitext(os.path.basename(output_path))[0]
+		md.saveConnection(conn, conn_name)
 
-		# Generate a connection name
-		connection_name = base_name
 
-		settings = QgsSettings()
+		# Refresh database connections in the Browser Panel
+		iface.browserModel().refresh()
 
-		if ext == '.gpkg':
-			# Create a GeoPackage connection
-			# The 'database' key stores the file path
-			settings.setValue(f"Qgis/connections/geopackage/{connection_name}/database", output_path)
-			# Optionally store if this connection is project-specific
-			settings.setValue(f"Qgis/connections/geopackage/{connection_name}/Project", False)
-			feedback.pushInfo(f"Created GeoPackage connection '{connection_name}' for {output_path}")
 
-		elif ext in ['.db', '.sqlite']:
-			# Create a Spatialite connection
-			settings.setValue(f"Qgis/connections/spatialite/{connection_name}/database", output_path)
-			settings.setValue(f"Qgis/connections/spatialite/{connection_name}/Project", False)
-			feedback.pushInfo(f"Created Spatialite connection '{connection_name}' for {output_path}")
-		else:
-			feedback.reportError("Unsupported file extension for connection creation.")
-			return
 
-		# After this, you may need to refresh the QGIS Browser panel for the connection to appear.
-		# This can be done by:
-		# iface.refreshDataStores()
+
+
 
 	def add_svg_paths(self, feedback):
 	
@@ -469,6 +453,7 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
     	# Load and style the LOCA layer
 		self.loadLayerAndApplyStyle(output_path, "LOCA", qml_path, feedback)
 
+		self.create_database_connection(output_path, feedback)
 
 		return {self.OUTPUT: output_path}
 	
