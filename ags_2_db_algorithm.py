@@ -295,11 +295,6 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		# Refresh database connections in the Browser Panel
 		iface.browserModel().refresh()
 
-
-
-
-
-
 	def add_svg_paths(self, feedback):
 	
 		svg_path = os.path.join(os.path.dirname(__file__), 'styles', 'svg')
