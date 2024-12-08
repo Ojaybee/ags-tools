@@ -316,6 +316,46 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		# This can be done by:
 		# iface.refreshDataStores()
 
+	def add_svg_paths(self, feedback):
+	
+		svg_path = os.path.join(os.path.dirname(__file__), 'styles', 'svg')
+		svg_paths = QgsApplication.svgPaths()
+		if svg_path not in svg_paths:
+			svg_paths.append(svg_path)
+			QgsApplication.setDefaultSvgPaths(svg_paths)
+			feedback.pushInfo("Added custom SVG path for symbols.")
+
+	def loadLayerAndApplyStyle(self, output_path, table_name, qml_path, feedback):
+		ext = os.path.splitext(output_path)[1].lower()
+		
+		if ext == '.gpkg':
+			# For GPKG
+			layer_path = f"{output_path}|layername={table_name}"
+			layer = QgsVectorLayer(layer_path, table_name, "ogr")
+		else:
+			# For Spatialite
+			uri = QgsDataSourceUri()
+			uri.setDatabase(output_path)
+			geom_column = 'geom'  
+			uri.setDataSource('', table_name, geom_column)
+			layer = QgsVectorLayer(uri.uri(), table_name, "spatialite")
+		
+		if not layer.isValid():
+			feedback.pushInfo(f"Table '{table_name}' cannot be added.")
+			return None
+		else:
+			QgsProject.instance().addMapLayer(layer)
+			feedback.pushInfo(f"Added '{table_name}' layer to the project.")
+
+		if layer.type() == QgsMapLayer.VectorLayer and os.path.exists(qml_path):
+			layer.loadNamedStyle(qml_path)
+			layer.triggerRepaint()
+			feedback.pushInfo("Applied QML style to the LOCA layer.")
+
+		if iface:  # Ensure iface is available in plugin context
+			iface.layerTreeView().refreshLayerSymbology(layer.id())
+
+		return layer
 
 	def processAlgorithm(self, parameters, context, feedback):
 		# Define the output path
@@ -416,6 +456,19 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				feedback.reportError(f"Error writing group '{group_name}' to GeoPackage: {errorMessage}")
 
 			first_layer = False
+
+		feedback.pushInfo("ALL GROUPS WRITTEN - DB CREATED")
+
+		# After the writing is done, call the helper functions:
+		self.add_svg_paths(feedback)
+
+
+
+		qml_path = os.path.join(os.path.dirname(__file__), 'styles', 'loca_spatial.qml')
+
+    	# Load and style the LOCA layer
+		self.loadLayerAndApplyStyle(output_path, "LOCA", qml_path, feedback)
+
 
 		return {self.OUTPUT: output_path}
 	
