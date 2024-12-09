@@ -51,7 +51,8 @@ from qgis.core import (QgsApplication,
 					   QgsProcessingException,
 					   QgsDataSourceUri,
 					   QgsMapLayer,
-					   QgsProviderRegistry
+					   QgsProviderRegistry,
+					   QgsRelationContext
 						)
 from qgis.utils import iface
 from io import StringIO
@@ -175,8 +176,6 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 					column_types[group_name][header] = "REAL" if all_numeric else "TEXT"
 
 		return data, column_types
-
-
 
 	def is_unique_loca_id(self, records, feedback):
 		"""
@@ -481,6 +480,34 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		finally:
 			conn.close()
 
+	def discover_relations_in_project(self, project, feedback):
+		"""
+		Discover and add relations from the database to the QGIS project.
+		"""
+		try:
+			# Get all vector layers loaded in the project
+			layers = [layer for layer in project.mapLayers().values() if isinstance(layer, QgsVectorLayer)]
+
+			# Get existing relations
+			existing_relations = list(project.relationManager().relations())
+
+			# Discover new relations
+			discovered_relations = project.relationManager().discoverRelations(existing_relations, layers)
+
+			if discovered_relations:
+				feedback.pushInfo(f"Discovered {len(discovered_relations)} relations:")
+				for relation in discovered_relations:
+					# referencingLayer() and referencedLayer() return layer IDs (strings)
+                    # Add the relation to the project
+					try:
+						project.relationManager().addRelation(relation)
+						feedback.pushInfo(f"Added relation: {relation.name()}")
+					except Exception as e:
+						feedback.reportError(f"Failed to add relation: {relation.name()} with error: {e}")
+			else:
+				feedback.pushInfo("No new relations were discovered in the database.")
+		except Exception as e:
+			feedback.reportError(f"Error discovering relations: {e}")
 
 
 	def processAlgorithm(self, parameters, context, feedback):
@@ -650,6 +677,9 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 
     	# Load and style the LOCA layer
 		self.loadLayerAndApplyStyle(output_path, "LOCA", qml_path, feedback)
+
+		# Discover relations
+		self.discover_relations_in_project(QgsProject.instance(), feedback)
 
 		self.create_database_connection(output_path, feedback)
 
