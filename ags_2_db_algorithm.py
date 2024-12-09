@@ -582,21 +582,23 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				layer.updateExtents()
 
 
+			related_tables = ["ERES", "GEOL", "ISPT"]
 
 			# Dynamically add foreign key for ERES table
-			if group_name.upper() == "ERES":
-				feedback.pushInfo(f"Creating relation")
-				field_definitions = [
-					f"{field.name()} {field.typeName()}" for field in layer.fields()
-				]
-				foreign_key_sql = f"""
-				CREATE TABLE {group_name} (
-					{', '.join(field_definitions)},
-					FOREIGN KEY (LOCA_ID) REFERENCES LOCA(LOCA_ID)
-				)
-				"""
-				options.driverOptions = [f"CREATE_TABLE={foreign_key_sql}"]
-				feedback.pushInfo(f"FOREIGN KEY SQL ADDED")
+			for child in related_tables:
+				if group_name.upper() == child.upper():
+					feedback.pushInfo(f"Creating relation {group_name}")
+					field_definitions = [
+						f"{field.name()} {field.typeName()}" for field in layer.fields()
+					]
+					foreign_key_sql = f"""
+					CREATE TABLE {group_name} (
+						{', '.join(field_definitions)},
+						FOREIGN KEY (LOCA_ID) REFERENCES LOCA(LOCA_ID)
+					)
+					"""
+					options.driverOptions = [f"CREATE_TABLE={foreign_key_sql}"]
+					feedback.pushInfo(f"FOREIGN KEY SQL ADDED FOR {child}")
 
 			if group_name.upper() != "LOCA":
 				if first_layer:
@@ -623,15 +625,19 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		# After all groups are written to the GeoPackage
 		feedback.pushInfo("All layers written. Adding relations.")
 
-		# Add foreign key relation between LOCA and ERES
-		self.add_foreign_key_relation(
-			output_path=output_path,
-			parent_table="LOCA",
-			child_table="ERES",
-			parent_field="LOCA_ID",
-			child_field="LOCA_ID",
-			feedback=feedback
-		)
+
+		# Add foreign key relations dynamically
+		for child in related_tables:
+			feedback.pushInfo(f"Creating foreign key relation for {child}")
+			self.add_foreign_key_relation(
+				output_path=output_path,
+				parent_table="LOCA",
+				child_table=child.upper(),
+				parent_field="LOCA_ID",
+				child_field="LOCA_ID",
+				feedback=feedback
+			)
+
 
 		feedback.pushInfo("All relations added.")
 
