@@ -55,7 +55,7 @@ from qgis.core import (QgsApplication,
 						)
 from qgis.utils import iface
 from io import StringIO
-# import sqlite3
+import sqlite3
 import os
 
 
@@ -176,6 +176,21 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 
 		return data, column_types
 
+
+
+	def is_unique_loca_id(self, records, feedback):
+		"""
+		Check if LOCA_ID is unique in the raw data.
+		"""
+		loca_ids = [record.get("LOCA_ID") for record in records if "LOCA_ID" in record]
+		duplicates = set([loca_id for loca_id in loca_ids if loca_ids.count(loca_id) > 1])
+
+		if duplicates:
+			feedback.reportError(f"Duplicate LOCA_ID values found: {duplicates}. Cannot set as PRIMARY KEY.")
+			return False
+		feedback.pushInfo("LOCA_ID is unique according to is_unique_loca_id. It can be set as PRIMARY KEY.")
+		return True
+
 	def createLOCAFeatures(self, records, column_types, crs, feedback):
 		"""
 		Create a memory point layer for LOCA features using available coordinate fields.
@@ -183,6 +198,10 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		- Logs if features or all fail to have coordinates.
 		- Reprojects if using LAT/LON from EPSG:4326 to target CRS.
 		"""
+	    # Check for LOCA_ID uniqueness before creating the layer
+		is_loca_id_unique = self.is_unique_loca_id(records, feedback)
+
+
 		# Determine which coordinate fields are present and use them in priority:
 		coord_priority = [
 			('LOCA_NATE', 'LOCA_NATN'),
@@ -208,8 +227,13 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 					chosen_coords = pair
 					break
 
+		# Define the data provider string with PRIMARY KEY if LOCA_ID is unique
+		provider_string = "Point?crs={}".format(crs.authid())
+		if is_loca_id_unique:
+			provider_string += "&primaryKey=LOCA_ID"
+		
 		# Create the layer
-		layer = QgsVectorLayer("Point?crs={}".format(crs.authid()), "LOCA", "memory")
+		layer = QgsVectorLayer(provider_string, "LOCA", "memory")
 		data_provider = layer.dataProvider()
 
 		# Add fields
@@ -282,6 +306,8 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		if features_with_coords == 0:
 			feedback.reportError("No LOCA features had valid coordinates. The LOCA layer will have no geometries.")
 
+
+
 		return layer
 
 	def create_database_connection(self, output_path, feedback):
@@ -336,6 +362,127 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 
 		return layer
 
+	def set_primary_key_for_loca(self, output_path, feedback):
+		"""
+		Set LOCA_ID as the primary key for the LOCA table in the GeoPackage, dynamically preserving the schema.
+		"""
+		conn = sqlite3.connect(output_path)
+		cursor = conn.cursor()
+
+		try:
+			# Check if LOCA_ID is already unique
+			query = """
+			SELECT LOCA_ID, COUNT(*) 
+			FROM LOCA 
+			GROUP BY LOCA_ID 
+			HAVING COUNT(*) > 1;
+			"""
+			cursor.execute(query)
+			duplicates = cursor.fetchall()
+
+			if duplicates:
+				feedback.reportError(f"Cannot set LOCA_ID as PRIMARY KEY. Duplicate values found: {duplicates}")
+				return False
+
+			feedback.pushInfo("LOCA_ID is unique. Setting as PRIMARY KEY.")
+
+			# Get the schema of the existing LOCA table
+			cursor.execute("PRAGMA table_info(LOCA);")
+			columns = cursor.fetchall()
+
+			# Dynamically construct the CREATE TABLE statement
+			column_definitions = []
+			column_names = []
+			for col in columns:
+				col_name = col[1]
+				col_type = col[2]
+
+				if col_name == "fid":
+					continue  # Exclude the default fid column
+
+				column_names.append(col_name)
+				if col_name == "LOCA_ID":
+					column_definitions.append(f"{col_name} {col_type} PRIMARY KEY")
+				else:
+					column_definitions.append(f"{col_name} {col_type}")
+
+			create_table_sql = f"""
+			CREATE TABLE LOCA (
+				{', '.join(column_definitions)}
+			)
+			"""
+
+			feedback.pushInfo(f"Rebuilding LOCA table with SQL: {create_table_sql}")
+
+			# Rebuild the table
+			cursor.execute("ALTER TABLE LOCA RENAME TO LOCA_old;")
+			cursor.execute(create_table_sql)
+			cursor.execute(f"""
+			INSERT INTO LOCA ({', '.join(column_names)})
+			SELECT {', '.join(column_names)} FROM LOCA_old;
+			""")
+			cursor.execute("DROP TABLE LOCA_old;")
+
+			conn.commit()
+			feedback.pushInfo("Primary key successfully set for LOCA.")
+			return True
+
+		except Exception as e:
+			feedback.reportError(f"Error setting primary key for LOCA: {e}")
+			conn.rollback()
+			return False
+		finally:
+			conn.close()
+
+	def add_foreign_key_relation(self, output_path, parent_table, child_table, parent_field, child_field, feedback):
+		"""
+		Add a foreign key relation to a GeoPackage by rebuilding the child table.
+		"""
+		conn = sqlite3.connect(output_path)
+		cursor = conn.cursor()
+
+		try:
+			# Get the schema of the existing child table
+			cursor.execute(f"PRAGMA table_info({child_table});")
+			columns = cursor.fetchall()
+
+			# Dynamically construct the CREATE TABLE statement
+			column_definitions = []
+			for col in columns:
+				col_name = col[1]
+				col_type = col[2]
+				column_definitions.append(f"{col_name} {col_type}")
+			column_definitions.append(
+				f"FOREIGN KEY ({child_field}) REFERENCES {parent_table}({parent_field})"
+			)
+
+			create_table_sql = f"""
+			CREATE TABLE {child_table}_new (
+				{', '.join(column_definitions)}
+			);
+			"""
+
+			feedback.pushInfo(f"Rebuilding {child_table} with SQL: {create_table_sql}")
+
+			# Rebuild the table
+			cursor.execute(f"ALTER TABLE {child_table} RENAME TO {child_table}_old;")
+			cursor.execute(create_table_sql)
+			cursor.execute(f"""
+			INSERT INTO {child_table}_new SELECT * FROM {child_table}_old;
+			""")
+			cursor.execute(f"DROP TABLE {child_table}_old;")
+			cursor.execute(f"ALTER TABLE {child_table}_new RENAME TO {child_table};")
+
+			conn.commit()
+			feedback.pushInfo(f"Foreign key relation added: {child_table}.{child_field} -> {parent_table}.{parent_field}")
+		except Exception as e:
+			feedback.reportError(f"Error adding foreign key relation: {e}")
+			conn.rollback()
+		finally:
+			conn.close()
+
+
+
 	def processAlgorithm(self, parameters, context, feedback):
 		# Define the output path
 		output_path = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
@@ -368,11 +515,42 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 
 			feedback.pushInfo(f"Processing group: {group_name}")
 
+			# Export layer
+			options = QgsVectorFileWriter.SaveVectorOptions()
+			options.driverName = "GPKG"
+			if ext == '.gpkg':
+				options.driverName = "GPKG"
+			elif ext == '.sqlite':
+				options.driverName = "SQLite"
+				options.driverOptions = ["SPATIALITE=YES"]
+			else:
+				raise QgsProcessingException("Unsupported file format selected.")
+
+			options.layerName = group_name
+			options.fileEncoding = "UTF-8"
+			# Geometry type will be derived automatically for V3 method
+
 			if group_name.upper() == "LOCA":
 				# Create spatial LOCA layer
 				layer = self.createLOCAFeatures(records, column_types, crs, feedback)
-				# layer = QgsVectorLayer("Point?crs=EPSG:4326", group_name, "memory")
-				# geometry_type = QgsWkbTypes.Point
+
+				   # Write the LOCA layer to GeoPackage
+				error, newFilename, newLayer, errorMessage = QgsVectorFileWriter.writeAsVectorFormatV3(
+					layer,
+					output_path,
+					transform_context,
+					options
+				)
+
+				if error == QgsVectorFileWriter.NoError:
+					feedback.pushInfo("Successfully wrote LOCA layer with PK to GeoPackage.")
+
+					# Attempt to set LOCA_ID as the primary key
+					if not self.set_primary_key_for_loca(output_path, feedback):
+						feedback.reportError("Failed to set LOCA_ID as PRIMARY KEY for LOCA.")
+				else:
+					feedback.reportError(f"Error writing LOCA layer to GeoPackage: {errorMessage}")
+
 			else:
 				# Non-spatial layer
 				layer = QgsVectorLayer("NoGeometry", group_name, "memory")
@@ -403,41 +581,59 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 					data_provider.addFeature(feature)
 				layer.updateExtents()
 
-			# Export layer
-			options = QgsVectorFileWriter.SaveVectorOptions()
-			options.driverName = "GPKG"
-			if ext == '.gpkg':
-				options.driverName = "GPKG"
-			elif ext == '.sqlite':
-				options.driverName = "SQLite"
-				options.driverOptions = ["SPATIALITE=YES"]
-			else:
-				raise QgsProcessingException("Unsupported file format selected.")
 
-			options.layerName = group_name
-			options.fileEncoding = "UTF-8"
-			# Geometry type will be derived automatically for V3 method
 
-			if first_layer:
-				options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteFile
-			else:
-				options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+			# Dynamically add foreign key for ERES table
+			if group_name.upper() == "ERES":
+				feedback.pushInfo(f"Creating relation")
+				field_definitions = [
+					f"{field.name()} {field.typeName()}" for field in layer.fields()
+				]
+				foreign_key_sql = f"""
+				CREATE TABLE {group_name} (
+					{', '.join(field_definitions)},
+					FOREIGN KEY (LOCA_ID) REFERENCES LOCA(LOCA_ID)
+				)
+				"""
+				options.driverOptions = [f"CREATE_TABLE={foreign_key_sql}"]
+				feedback.pushInfo(f"FOREIGN KEY SQL ADDED")
 
-			error, newFilename, newLayer, errorMessage = QgsVectorFileWriter.writeAsVectorFormatV3(
-				layer,
-				output_path,
-				transform_context,
-				options
-			)
+			if group_name.upper() != "LOCA":
+				if first_layer:
+					options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteFile
+				else:
+					options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
 
-			if error == QgsVectorFileWriter.NoError:
-				feedback.pushInfo(f"Successfully wrote group '{group_name}' to GeoPackage.")
-			else:
-				feedback.reportError(f"Error writing group '{group_name}' to GeoPackage: {errorMessage}")
+				error, newFilename, newLayer, errorMessage = QgsVectorFileWriter.writeAsVectorFormatV3(
+					layer,
+					output_path,
+					transform_context,
+					options
+				)
+
+				if error == QgsVectorFileWriter.NoError:
+					feedback.pushInfo(f"Successfully wrote group '{group_name}' to GeoPackage.")
+				else:
+					feedback.reportError(f"Error writing group '{group_name}' to GeoPackage: {errorMessage}")
 
 			first_layer = False
 
 		feedback.pushInfo("ALL GROUPS WRITTEN - DB CREATED")
+
+		# After all groups are written to the GeoPackage
+		feedback.pushInfo("All layers written. Adding relations.")
+
+		# Add foreign key relation between LOCA and ERES
+		self.add_foreign_key_relation(
+			output_path=output_path,
+			parent_table="LOCA",
+			child_table="ERES",
+			parent_field="LOCA_ID",
+			child_field="LOCA_ID",
+			feedback=feedback
+		)
+
+		feedback.pushInfo("All relations added.")
 
 		# After the writing is done, call the helper functions:
 		self.add_svg_paths(feedback)
