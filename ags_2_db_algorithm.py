@@ -361,7 +361,8 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		first_layer = True
 		transform_context = context.transformContext()
 
-		for group_name, records in data.items():
+		for group_name, records in sorted(data.items(), key=lambda x: x[0].upper() != "LOCA"):
+		
 			if group_name.endswith("_units"):
 				continue  # Skip unit tables
 
