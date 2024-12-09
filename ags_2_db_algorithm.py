@@ -638,7 +638,7 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				feedback=feedback
 			)
 
-
+			self.loadLayerAndApplyStyle(output_path, child, '', feedback)
 		feedback.pushInfo("All relations added.")
 
 		# After the writing is done, call the helper functions:
