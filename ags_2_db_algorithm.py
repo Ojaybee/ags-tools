@@ -52,7 +52,8 @@ from qgis.core import (QgsApplication,
 					   QgsDataSourceUri,
 					   QgsMapLayer,
 					   QgsProviderRegistry,
-					   QgsRelationContext
+					   QgsLineString,
+
 						)
 from qgis.utils import iface
 from io import StringIO
@@ -509,7 +510,6 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		except Exception as e:
 			feedback.reportError(f"Error discovering relations: {e}")
 
-
 	def processAlgorithm(self, parameters, context, feedback):
 		# Define the output path
 		output_path = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
@@ -676,7 +676,7 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		qml_path = os.path.join(os.path.dirname(__file__), 'styles', 'loca_spatial.qml')
 
     	# Load and style the LOCA layer
-		self.loadLayerAndApplyStyle(output_path, "LOCA", qml_path, feedback)
+		loca_layer = self.loadLayerAndApplyStyle(output_path, "LOCA", qml_path, feedback)
 
 		# Discover relations
 		self.discover_relations_in_project(QgsProject.instance(), feedback)
