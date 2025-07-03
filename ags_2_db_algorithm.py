@@ -24,7 +24,7 @@
 
 __author__ = 'Oliver Burdekin / burdGIS'
 __date__ = '2023-04-19'
-__copyright__ = '(C) 202h by Oliver Burdekin / burdGIS'
+__copyright__ = '(C) 2025 by Oliver Burdekin / burdGIS'
 __version__ = '0.2.0'
 
 # This will get replaced with a git SHA1 when you do a git archive
