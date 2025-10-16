@@ -5,12 +5,14 @@
 [general]
 name=AGS Tools
 qgisMinimumVersion=3.0
-description=This plugin parses an AGS4 file and creates a geopackage or SQlite database from it. AGS4 files can be validated using the BGS AGS API.
-version=0.1.0
+description=This plugin provides tools for working with files in the AGS4 format.
 author=Oliver Burdekin (burdGIS) and Richard Meredith (GeoEnvironmental) 
 email=info@burdgis.com
 
-about=This plugin provides tools for working with files in the AGS format.
+about=This plugin parses an AGS4 file and creates a geopackage or SQlite database from it. AGS4 files can be validated using the BGS AGS API.
+version=0.1.0
+
+
 
 tracker=https://github.com/Ojaybee/ags-tools/issues
 repository=https://github.com/Ojaybee/ags-tools
