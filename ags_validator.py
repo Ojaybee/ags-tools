@@ -30,14 +30,17 @@ __copyright__ = '(C) 2023 by Oliver Burdekin / burdGIS'
 
 __revision__ = '$Format:%H$'
 
-from qgis.PyQt.QtCore import QCoreApplication, QSettings
-from qgis.core import (QgsProcessingAlgorithm,
-					   QgsProcessingParameterFile,
-					   QgsProcessingParameterFileDestination,
-					   QgsProcessingParameterEnum,
-					   )
+from qgis.PyQt.QtCore import QCoreApplication, QSettings, QUrl
+from qgis.PyQt.QtNetwork import QNetworkRequest, QHttpMultiPart, QHttpPart
+from qgis.core import (
+    QgsProcessingAlgorithm,
+    QgsProcessingParameterFile,
+    QgsProcessingParameterFileDestination,
+    QgsProcessingParameterEnum,
+    QgsBlockingNetworkRequest,
+    # QgsApplication,  # uncomment if you use QGIS auth manager
+)
 import os
-import requests
 
 class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 	"""
@@ -100,49 +103,83 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 
    
 	def processAlgorithm(self, parameters, context, feedback):
-
-		# Retrieve the values of the parameters
+		# Retrieve parameters
 		file_path = self.parameterAsFile(parameters, self.INPUT, context)
-		
 		dictionary = self.DICTIONARY_OPTIONS[self.parameterAsEnum(parameters, self.DICTIONARY, context)]
 		dictionary_alias = self.DICTIONARY_ALIASES[dictionary]
-		
 		checkers_selected_indices = self.parameterAsEnums(parameters, self.CHECKERS, context)
 		checkers_selected = [self.CHECKER_OPTIONS[i] for i in checkers_selected_indices]
 		output_file = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
 
-		# directory_path = os.path.dirname(file_path)
 		file_name = os.path.basename(file_path)
 		url = 'https://agsapi.bgs.ac.uk/validate/'
 		fmt = 'text'
-		
+
+		# Read file
 		with open(file_path, 'rb') as f:
 			file_content = f.read()
-		
-		files = {'files': (file_name, file_content, 'multipart/form-data')}
-		
-		payload = {
-			'std_dictionary': dictionary_alias,
-			'checkers': checkers_selected,
-			'fmt': fmt
-		}
-		
-		response = requests.post(url, data=payload, files=files)
-		
-		if response.status_code == 200:
-			# API call was successful
-			data = response.text
-			feedback.pushInfo('API call was successful. Response: {}'.format(data))
-			with open(output_file, 'w') as f:
-				f.write(data)
-		else:
-			# API call failed, handle the error
-			feedback.reportError('Error calling API: status code {}'.format(response.status_code))
-			raise Exception('Error calling API: status code {}'.format(response.status_code))
 
+		# --- Build multipart/form-data using QGIS/Qt ---
+		from qgis.PyQt.QtCore import QUrl
+		from qgis.PyQt.QtNetwork import QNetworkRequest, QHttpMultiPart, QHttpPart
+		from qgis.core import QgsBlockingNetworkRequest
 
+		mp = QHttpMultiPart(QHttpMultiPart.FormDataType)
 
-		# Return the outputs of the algorithm
+		# std_dictionary
+		part_std = QHttpPart()
+		part_std.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="std_dictionary"')
+		part_std.setBody(dictionary_alias.encode('utf-8'))
+		mp.append(part_std)
+
+		# checkers[] (multiple fields with same name)
+		for c in checkers_selected:
+			p = QHttpPart()
+			p.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="checkers"')
+			p.setBody(str(c).encode('utf-8'))
+			mp.append(p)
+
+		# fmt
+		part_fmt = QHttpPart()
+		part_fmt.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="fmt"')
+		part_fmt.setBody(fmt.encode('utf-8'))
+		mp.append(part_fmt)
+
+		# file upload
+		part_file = QHttpPart()
+		part_file.setHeader(QNetworkRequest.ContentDispositionHeader,
+							f'form-data; name="files"; filename="{file_name}"')
+		part_file.setHeader(QNetworkRequest.ContentTypeHeader, 'text/plain')
+		part_file.setBody(file_content)
+		mp.append(part_file)
+
+		# Fire POST via QGIS network stack (respects proxy/auth)
+		req = QNetworkRequest(QUrl(url))
+		bnr = QgsBlockingNetworkRequest()
+		bnr.setTimeout(60000)  # 60s; adjust if needed
+
+		ok = bnr.post(req, mp)
+
+		# Handle network errors
+		if (not ok) or bnr.error() != QgsBlockingNetworkRequest.NoError:
+			msg = bnr.errorMessage()
+			feedback.reportError(f'Error calling API: {msg}')
+			raise Exception(f'Error calling API: {msg}')
+
+		reply = bnr.reply()
+		# ensure multipart lives until reply is done
+		mp.setParent(reply)
+
+		data = bytes(reply.readAll()).decode('utf-8', errors='replace')
+		reply.deleteLater()
+
+		# Write output file
+		with open(output_file, 'w', encoding='utf-8') as f:
+			f.write(data)
+
+		feedback.pushInfo('API call was successful.')
+
+		# Return outputs
 		return {self.OUTPUT: output_file}
 
 	
