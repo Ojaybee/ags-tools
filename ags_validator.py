@@ -103,7 +103,7 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 
    
 	def processAlgorithm(self, parameters, context, feedback):
-		# Retrieve parameters
+		# Params
 		file_path = self.parameterAsFile(parameters, self.INPUT, context)
 		dictionary = self.DICTIONARY_OPTIONS[self.parameterAsEnum(parameters, self.DICTIONARY, context)]
 		dictionary_alias = self.DICTIONARY_ALIASES[dictionary]
@@ -119,20 +119,20 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 		with open(file_path, 'rb') as f:
 			file_content = f.read()
 
-		# --- Build multipart/form-data using QGIS/Qt ---
-		from qgis.PyQt.QtCore import QUrl
-		from qgis.PyQt.QtNetwork import QNetworkRequest, QHttpMultiPart, QHttpPart
-		from qgis.core import QgsBlockingNetworkRequest
+		# --- Build multipart/form-data via Qt ---
+		from qgis.PyQt.QtCore import QUrl, QEventLoop, QTimer
+		from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply, QHttpMultiPart, QHttpPart
+		from qgis.core import QgsNetworkAccessManager
 
 		mp = QHttpMultiPart(QHttpMultiPart.FormDataType)
 
 		# std_dictionary
-		part_std = QHttpPart()
-		part_std.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="std_dictionary"')
-		part_std.setBody(dictionary_alias.encode('utf-8'))
-		mp.append(part_std)
+		p_std = QHttpPart()
+		p_std.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="std_dictionary"')
+		p_std.setBody(dictionary_alias.encode('utf-8'))
+		mp.append(p_std)
 
-		# checkers[] (multiple fields with same name)
+		# checkers (repeat field)
 		for c in checkers_selected:
 			p = QHttpPart()
 			p.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="checkers"')
@@ -140,47 +140,56 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 			mp.append(p)
 
 		# fmt
-		part_fmt = QHttpPart()
-		part_fmt.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="fmt"')
-		part_fmt.setBody(fmt.encode('utf-8'))
-		mp.append(part_fmt)
+		p_fmt = QHttpPart()
+		p_fmt.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="fmt"')
+		p_fmt.setBody(fmt.encode('utf-8'))
+		mp.append(p_fmt)
 
-		# file upload
-		part_file = QHttpPart()
-		part_file.setHeader(QNetworkRequest.ContentDispositionHeader,
-							f'form-data; name="files"; filename="{file_name}"')
-		part_file.setHeader(QNetworkRequest.ContentTypeHeader, 'text/plain')
-		part_file.setBody(file_content)
-		mp.append(part_file)
+		# file
+		p_file = QHttpPart()
+		p_file.setHeader(QNetworkRequest.ContentDispositionHeader,
+						f'form-data; name="files"; filename="{file_name}"')
+		p_file.setHeader(QNetworkRequest.ContentTypeHeader, 'text/plain')  # or 'application/octet-stream'
+		p_file.setBody(file_content)
+		mp.append(p_file)
 
-		# Fire POST via QGIS network stack (respects proxy/auth)
+		# POST via QGIS network manager (proxy/auth aware)
 		req = QNetworkRequest(QUrl(url))
-		bnr = QgsBlockingNetworkRequest()
-		bnr.setTimeout(60000)  # 60s; adjust if needed
+		# If you use a QGIS auth config, uncomment:
+		# from qgis.core import QgsApplication
+		# QgsApplication.authManager().updateNetworkRequest(req, "your_authcfg_id")
 
-		ok = bnr.post(req, mp)
+		nam = QgsNetworkAccessManager.instance()
+		reply = nam.post(req, mp)
+		mp.setParent(reply)  # keep multipart alive until finished
 
-		# Handle network errors
-		if (not ok) or bnr.error() != QgsBlockingNetworkRequest.NoError:
-			msg = bnr.errorMessage()
-			feedback.reportError(f'Error calling API: {msg}')
-			raise Exception(f'Error calling API: {msg}')
+		# Block until finished (with a 60s safety timeout)
+		loop = QEventLoop()
+		timer = QTimer()
+		timer.setSingleShot(True)
+		timer.timeout.connect(lambda: reply.abort())
+		reply.finished.connect(loop.quit)
+		timer.start(60000)  # adjust or remove if you prefer no timeout
+		loop.exec_()
+		timer.stop()
 
-		reply = bnr.reply()
-		# ensure multipart lives until reply is done
-		mp.setParent(reply)
+		# Error handling
+		if reply.error() != QNetworkReply.NoError:
+			err = reply.errorString()
+			reply.deleteLater()
+			feedback.reportError(f"Error calling API: {err}")
+			raise Exception(f"Error calling API: {err}")
 
+		# Success
 		data = bytes(reply.readAll()).decode('utf-8', errors='replace')
 		reply.deleteLater()
 
-		# Write output file
 		with open(output_file, 'w', encoding='utf-8') as f:
 			f.write(data)
 
 		feedback.pushInfo('API call was successful.')
-
-		# Return outputs
 		return {self.OUTPUT: output_file}
+
 
 	
 	def processing_log(self, message):
