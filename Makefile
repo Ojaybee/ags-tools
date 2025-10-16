@@ -1,7 +1,7 @@
 #/***************************************************************************
 # AGS Tools
 #
-# This plugin parses an AGS file and creates an SQlite database from it
+# This plugin parses an AGS file and creates a database from it
 #							 -------------------
 #		begin				: 2023-04-19
 #		git sha				: $Format:%H$
