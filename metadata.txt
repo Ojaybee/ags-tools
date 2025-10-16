@@ -9,7 +9,8 @@ description=This plugin provides tools for working with files in the AGS4 format
 author=Oliver Burdekin (burdGIS) and Richard Meredith (GeoEnvironmental) 
 email=info@burdgis.com
 
-about=This plugin parses an AGS4 file and creates a geopackage or SQlite database from it. AGS4 files can be validated using the BGS AGS API.
+about=This plugin parses an AGS4 file and creates a geopackage or SQlite database from it. AGS4 files can be validated using the British Geological Survey AGSAPI. Results/data returned by the API are subject to the API’s terms (Open Government Licence v3.0). Internet connection required.
+.
 version=0.1.0
 
 
@@ -32,6 +33,8 @@ category=Analysis
 icon=icon.png
 # experimental flag
 experimental=True
+license=GPL-2.0-or-later
+
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
