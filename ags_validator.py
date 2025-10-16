@@ -30,15 +30,15 @@ __copyright__ = '(C) 2023 by Oliver Burdekin / burdGIS'
 
 __revision__ = '$Format:%H$'
 
-from qgis.PyQt.QtCore import QCoreApplication, QSettings, QUrl
-from qgis.PyQt.QtNetwork import QNetworkRequest, QHttpMultiPart, QHttpPart
+from qgis.PyQt.QtCore import QCoreApplication, QUrl, QEventLoop, QTimer
+from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply, QHttpMultiPart, QHttpPart
 from qgis.core import (
-    QgsProcessingAlgorithm,
-    QgsProcessingParameterFile,
-    QgsProcessingParameterFileDestination,
-    QgsProcessingParameterEnum,
-    QgsBlockingNetworkRequest,
-    # QgsApplication,  # uncomment if you use QGIS auth manager
+	QgsProcessingAlgorithm,
+	QgsProcessingParameterFile,
+	QgsProcessingParameterFileDestination,
+	QgsProcessingParameterEnum,
+	QgsNetworkAccessManager,
+	# QgsApplication,  # uncomment if you use QGIS auth manager
 )
 import os
 
@@ -120,9 +120,6 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 			file_content = f.read()
 
 		# --- Build multipart/form-data via Qt ---
-		from qgis.PyQt.QtCore import QUrl, QEventLoop, QTimer
-		from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply, QHttpMultiPart, QHttpPart
-		from qgis.core import QgsNetworkAccessManager
 
 		mp = QHttpMultiPart(QHttpMultiPart.FormDataType)
 
