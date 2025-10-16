@@ -3,17 +3,17 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=AGS Tools (Processing)
+name=AGS Tools
 qgisMinimumVersion=3.0
-description=This plugin parses an AGS file and creates an SQlite database from it
-version=0.1
-author=Oliver Burdekin / burdGIS
+description=This plugin parses an AGS4 file and creates a geopackage or SQlite database from it. AGS4 files can be validated using the BGS AGS API.
+version=0.1.0
+author=Oliver Burdekin (burdGIS) and Richard Meredith (GeoEnvironmental) 
 email=info@burdgis.com
 
 about=This plugin provides tools for working with files in the AGS format.
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/Ojaybee/ags-tools/issues
+repository=https://github.com/Ojaybee/ags-tools
 # End of mandatory metadata
 
 # Recommended items:
@@ -23,9 +23,9 @@ hasProcessingProvider=yes
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=python
+tags=AGS4, geotechnical, engineering, validation,Processing, Geopackage  
 
-homepage=http://homepage
+homepage=https://github.com/Ojaybee/ags-tools#readme
 category=Analysis
 icon=icon.png
 # experimental flag
