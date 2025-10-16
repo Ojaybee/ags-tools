@@ -30,14 +30,17 @@ __copyright__ = '(C) 2023 by Oliver Burdekin / burdGIS'
 
 __revision__ = '$Format:%H$'
 
-from qgis.PyQt.QtCore import QCoreApplication, QSettings
-from qgis.core import (QgsProcessingAlgorithm,
-					   QgsProcessingParameterFile,
-					   QgsProcessingParameterFileDestination,
-					   QgsProcessingParameterEnum,
-					   )
+from qgis.PyQt.QtCore import QCoreApplication, QUrl, QEventLoop, QTimer
+from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply, QHttpMultiPart, QHttpPart
+from qgis.core import (
+	QgsProcessingAlgorithm,
+	QgsProcessingParameterFile,
+	QgsProcessingParameterFileDestination,
+	QgsProcessingParameterEnum,
+	QgsNetworkAccessManager,
+	# QgsApplication,  # uncomment if you use QGIS auth manager
+)
 import os
-import requests
 
 class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 	"""
@@ -100,50 +103,90 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 
    
 	def processAlgorithm(self, parameters, context, feedback):
-
-		# Retrieve the values of the parameters
+		# Params
 		file_path = self.parameterAsFile(parameters, self.INPUT, context)
-		
 		dictionary = self.DICTIONARY_OPTIONS[self.parameterAsEnum(parameters, self.DICTIONARY, context)]
 		dictionary_alias = self.DICTIONARY_ALIASES[dictionary]
-		
 		checkers_selected_indices = self.parameterAsEnums(parameters, self.CHECKERS, context)
 		checkers_selected = [self.CHECKER_OPTIONS[i] for i in checkers_selected_indices]
 		output_file = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
 
-		# directory_path = os.path.dirname(file_path)
 		file_name = os.path.basename(file_path)
 		url = 'https://agsapi.bgs.ac.uk/validate/'
 		fmt = 'text'
-		
+
+		# Read file
 		with open(file_path, 'rb') as f:
 			file_content = f.read()
-		
-		files = {'files': (file_name, file_content, 'multipart/form-data')}
-		
-		payload = {
-			'std_dictionary': dictionary_alias,
-			'checkers': checkers_selected,
-			'fmt': fmt
-		}
-		
-		response = requests.post(url, data=payload, files=files)
-		
-		if response.status_code == 200:
-			# API call was successful
-			data = response.text
-			feedback.pushInfo('API call was successful. Response: {}'.format(data))
-			with open(output_file, 'w') as f:
-				f.write(data)
-		else:
-			# API call failed, handle the error
-			feedback.reportError('Error calling API: status code {}'.format(response.status_code))
-			raise Exception('Error calling API: status code {}'.format(response.status_code))
 
+		# --- Build multipart/form-data via Qt ---
 
+		mp = QHttpMultiPart(QHttpMultiPart.FormDataType)
 
-		# Return the outputs of the algorithm
+		# std_dictionary
+		p_std = QHttpPart()
+		p_std.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="std_dictionary"')
+		p_std.setBody(dictionary_alias.encode('utf-8'))
+		mp.append(p_std)
+
+		# checkers (repeat field)
+		for c in checkers_selected:
+			p = QHttpPart()
+			p.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="checkers"')
+			p.setBody(str(c).encode('utf-8'))
+			mp.append(p)
+
+		# fmt
+		p_fmt = QHttpPart()
+		p_fmt.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="fmt"')
+		p_fmt.setBody(fmt.encode('utf-8'))
+		mp.append(p_fmt)
+
+		# file
+		p_file = QHttpPart()
+		p_file.setHeader(QNetworkRequest.ContentDispositionHeader,
+						f'form-data; name="files"; filename="{file_name}"')
+		p_file.setHeader(QNetworkRequest.ContentTypeHeader, 'text/plain')  # or 'application/octet-stream'
+		p_file.setBody(file_content)
+		mp.append(p_file)
+
+		# POST via QGIS network manager (proxy/auth aware)
+		req = QNetworkRequest(QUrl(url))
+		# If you use a QGIS auth config, uncomment:
+		# from qgis.core import QgsApplication
+		# QgsApplication.authManager().updateNetworkRequest(req, "your_authcfg_id")
+
+		nam = QgsNetworkAccessManager.instance()
+		reply = nam.post(req, mp)
+		mp.setParent(reply)  # keep multipart alive until finished
+
+		# Block until finished (with a 60s safety timeout)
+		loop = QEventLoop()
+		timer = QTimer()
+		timer.setSingleShot(True)
+		timer.timeout.connect(lambda: reply.abort())
+		reply.finished.connect(loop.quit)
+		timer.start(60000)  # adjust or remove if you prefer no timeout
+		loop.exec_()
+		timer.stop()
+
+		# Error handling
+		if reply.error() != QNetworkReply.NoError:
+			err = reply.errorString()
+			reply.deleteLater()
+			feedback.reportError(f"Error calling API: {err}")
+			raise Exception(f"Error calling API: {err}")
+
+		# Success
+		data = bytes(reply.readAll()).decode('utf-8', errors='replace')
+		reply.deleteLater()
+
+		with open(output_file, 'w', encoding='utf-8') as f:
+			f.write(data)
+
+		feedback.pushInfo('API call was successful.')
 		return {self.OUTPUT: output_file}
+
 
 	
 	def processing_log(self, message):
