@@ -25,7 +25,7 @@
 __author__ = 'Oliver Burdekin / burdGIS'
 __date__ = '2023-04-19'
 __copyright__ = '(C) 2025 by Oliver Burdekin / burdGIS'
-__version__ = '0.2.0'
+
 
 # This will get replaced with a git SHA1 when you do a git archive
 
@@ -94,7 +94,7 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 			QgsProcessingParameterFile(
 				self.INPUT,
 				self.tr('Input File'),
-				defaultValue=r'C:\Users\Oliver\Documents\_demo\ags-tools\Esholt.ags'
+				
 			)
 		)
 
@@ -115,7 +115,7 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				self.OUTPUT,
 				self.tr('Output File'),
 				fileFilter='GeoPackage (*.gpkg);;SpatiaLite (*.sqlite)'
-				# defaultValue=r'C:\Users\Oliver\Documents\_demo\ags-tools\_dev-testing\gpkg-testing\test.gpkg'
+				
 			)
 		)
 
