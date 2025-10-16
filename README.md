@@ -10,7 +10,7 @@ Converts an AGS4 file into a GIS-ready GeoPackage or SQLite database.
 
 
 **Output**
-- **GeoPackage** `.gpkg` or `.db` 
+- **GeoPackage** `.gpkg` or **SpatialLite** `.sqlite` 
 
 **How to use**
 1. Open **Processing Toolbox → AGS Tools → AGS2DB**.  
