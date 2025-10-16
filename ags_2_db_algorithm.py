@@ -286,7 +286,7 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 		return layer
 
 	def create_database_connection(self, output_path, feedback):
-
+		# Only works for gpkg
 		md = QgsProviderRegistry.instance().providerMetadata("ogr")
 		conn = md.createConnection(output_path, {})
 		conn_name = os.path.splitext(os.path.basename(output_path))[0]
@@ -306,33 +306,24 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 			feedback.pushInfo("Added custom SVG path for symbols.")
 
 	def loadLayerAndApplyStyle(self, output_path, table_name, qml_path, feedback):
-		ext = os.path.splitext(output_path)[1].lower()
-		
-		if ext == '.gpkg':
-			# For GPKG
-			layer_path = f"{output_path}|layername={table_name}"
-			layer = QgsVectorLayer(layer_path, table_name, "ogr")
-		else:
-			# For Spatialite
-			uri = QgsDataSourceUri()
-			uri.setDatabase(output_path)
-			geom_column = 'geom'  
-			uri.setDataSource('', table_name, geom_column)
-			layer = QgsVectorLayer(uri.uri(), table_name, "spatialite")
-		
+		# Load the layer using OGR provider. GPK and SpatiaLite are supported.
+
+		layer_path = f"{output_path}|layername={table_name}"
+		layer = QgsVectorLayer(layer_path, table_name, "ogr")
+
 		if not layer.isValid():
 			feedback.pushInfo(f"Table '{table_name}' cannot be added.")
 			return None
-		else:
-			QgsProject.instance().addMapLayer(layer)
-			feedback.pushInfo(f"Added '{table_name}' layer to the project.")
 
-		if layer.type() == QgsMapLayer.VectorLayer and os.path.exists(qml_path):
+		QgsProject.instance().addMapLayer(layer)
+		feedback.pushInfo(f"Added '{table_name}' layer to the project.")
+
+		if layer.isValid() and os.path.exists(qml_path):
 			layer.loadNamedStyle(qml_path)
 			layer.triggerRepaint()
 			feedback.pushInfo("Applied QML style to the LOCA layer.")
 
-		if iface:  # Ensure iface is available in plugin context
+		if iface:
 			iface.layerTreeView().refreshLayerSymbology(layer.id())
 
 		return layer
