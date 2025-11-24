@@ -112,7 +112,7 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 		output_file = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
 
 		file_name = os.path.basename(file_path)
-		url = 'https://agsapi.bgs.ac.uk/v1/validate/'
+		url = 'https://agsapi.bgs.ac.uk/v6/validate/'
 		fmt = 'text'
 
 		# Read file
