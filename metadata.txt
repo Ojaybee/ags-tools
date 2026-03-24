@@ -24,8 +24,8 @@ repository=https://github.com/Ojaybee/ags-tools
 hasProcessingProvider=yes
 # Uncomment the following line and add your changelog:
 changelog=
-v0.1.2 QGIS 4.0.0 compatible
-v0.1.1 Validator updated to use V6 (thanks KoalaGeo)
+  v0.1.2 QGIS 4.0.0 compatible
+  v0.1.1 Validator updated to use V6 (thanks KoalaGeo)
 
 
 # Tags are comma separated with spaces allowed
