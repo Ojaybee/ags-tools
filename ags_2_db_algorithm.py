@@ -409,9 +409,9 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 			# Geometry type will be derived automatically for V3 method
 
 			if first_layer:
-				options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteFile
+				options.actionOnExistingFile = QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteFile
 			else:
-				options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+				options.actionOnExistingFile = QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteLayer
 
 			error, newFilename, newLayer, errorMessage = QgsVectorFileWriter.writeAsVectorFormatV3(
 				layer,
@@ -420,7 +420,7 @@ class AGS2DBAlgorithm(QgsProcessingAlgorithm):
 				options
 			)
 
-			if error == QgsVectorFileWriter.NoError:
+			if error == QgsVectorFileWriter.WriterError.NoError:
 				feedback.pushInfo(f"Successfully wrote group '{group_name}' to GeoPackage.")
 			else:
 				feedback.reportError(f"Error writing group '{group_name}' to GeoPackage: {errorMessage}")

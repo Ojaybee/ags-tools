@@ -69,7 +69,7 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 			QgsProcessingParameterFile(
 				self.INPUT,
 				self.tr("Input File"),
-				behavior=QgsProcessingParameterFile.File,
+				behavior=QgsProcessingParameterFile.Behavior.File,
 				fileFilter="All files (*.*)"
 			)
 		)
@@ -121,32 +121,32 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 
 		# --- Build multipart/form-data via Qt ---
 
-		mp = QHttpMultiPart(QHttpMultiPart.FormDataType)
+		mp = QHttpMultiPart(QHttpMultiPart.ContentType.FormDataType)
 
 		# std_dictionary
 		p_std = QHttpPart()
-		p_std.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="std_dictionary"')
+		p_std.setHeader(QNetworkRequest.KnownHeaders.ContentDispositionHeader, 'form-data; name="std_dictionary"')
 		p_std.setBody(dictionary_alias.encode('utf-8'))
 		mp.append(p_std)
 
 		# checkers (repeat field)
 		for c in checkers_selected:
 			p = QHttpPart()
-			p.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="checkers"')
+			p.setHeader(QNetworkRequest.KnownHeaders.ContentDispositionHeader, 'form-data; name="checkers"')
 			p.setBody(str(c).encode('utf-8'))
 			mp.append(p)
 
 		# fmt
 		p_fmt = QHttpPart()
-		p_fmt.setHeader(QNetworkRequest.ContentDispositionHeader, 'form-data; name="fmt"')
+		p_fmt.setHeader(QNetworkRequest.KnownHeaders.ContentDispositionHeader, 'form-data; name="fmt"')
 		p_fmt.setBody(fmt.encode('utf-8'))
 		mp.append(p_fmt)
 
 		# file
 		p_file = QHttpPart()
-		p_file.setHeader(QNetworkRequest.ContentDispositionHeader,
+		p_file.setHeader(QNetworkRequest.KnownHeaders.ContentDispositionHeader,
 						f'form-data; name="files"; filename="{file_name}"')
-		p_file.setHeader(QNetworkRequest.ContentTypeHeader, 'text/plain')  # or 'application/octet-stream'
+		p_file.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, 'text/plain')  # or 'application/octet-stream'
 		p_file.setBody(file_content)
 		mp.append(p_file)
 
@@ -167,11 +167,11 @@ class AGSValidatorAlgorithm(QgsProcessingAlgorithm):
 		timer.timeout.connect(lambda: reply.abort())
 		reply.finished.connect(loop.quit)
 		timer.start(60000)  # adjust or remove if you prefer no timeout
-		loop.exec_()
+		loop.exec()
 		timer.stop()
 
 		# Error handling
-		if reply.error() != QNetworkReply.NoError:
+		if reply.error() != QNetworkReply.NetworkError.NoError:
 			err = reply.errorString()
 			reply.deleteLater()
 			feedback.reportError(f"Error calling API: {err}")
