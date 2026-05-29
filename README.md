@@ -48,6 +48,53 @@ Validates an AGS4 file against the selected dictionary using the **BGS AGSAPI**,
 
 ---
 
+## Contributing
+
+Contributions are welcome. To keep the project manageable, please follow the workflow below.
+
+### Feature requests and bug reports
+
+Before starting work, please check the existing Issues to see whether the feature or bug has already been raised.
+
+For new features, larger changes, or anything that may affect how the plugin works, please open an Issue first. This helps avoid duplicated work and gives us a chance to discuss the approach before code is written.
+
+For small fixes, such as typos or minor documentation updates, you can open a pull request directly.
+
+### Development workflow
+
+1. Fork the repository.
+2. Create a new branch for your change.
+3. Keep each branch focused on one feature, bug fix, or documentation change.
+4. Make your changes.
+5. Test the plugin in QGIS before submitting.
+6. Update the documentation if your change affects how the plugin is used.
+7. Open a pull request back to the main repository.
+
+Please avoid combining unrelated changes in a single pull request. For example, a new feature, a bug fix, and formatting changes should normally be submitted as separate pull requests.
+
+### Branch naming
+
+Use a short, descriptive branch name, for example:
+
+- `fix-layer-loading-error`
+- `add-export-option`
+- `update-readme`
+
+### Pull requests
+
+When opening a pull request, please include:
+
+- a short description of what has changed;
+- the Issue number it relates to, if applicable;
+- the QGIS version used for testing;
+- any notes about known limitations or follow-up work.
+
+### Code style
+
+Please follow the style and structure already used in the plugin. Keep changes as small and focused as possible, and avoid committing local cache files, generated files, or development environment settings.
+
+---
+
 ### Licensing & attribution
 
 This plugin is licensed **GPL-2.0-or-later**.  
