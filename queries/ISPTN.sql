@@ -5,7 +5,7 @@ SELECT
     substr(gs.GEOL_LEG, 1, 1) AS "Geological group at ISPT_TOP",
     ls.geom
 FROM
-    loca_spatial ls
+    loca ls
 JOIN
     GEOL gs ON ls.LOCA_ID = gs.LOCA_ID
 JOIN
