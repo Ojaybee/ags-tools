@@ -1,0 +1,10 @@
+Add descriptions to contam resultsv2.sql
+Add descriptions to samples v2.sql
+Ex hole recordv2.sql
+Ex hole summary tablev2.sql
+Geol Summary Tablev3.sql
+Sample descriptions from GRAG where sample depths less than 3m.sql
+Select from GRAG where sample depth less than 3 order by LOCA_ID and Depth.sql
+Strata Summary table
+eres_soil_contamination_pivot_table_no_LOCA.sql
+sql_nonspat.txt
