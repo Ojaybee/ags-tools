@@ -10,8 +10,7 @@
 -- DESCRIPTION       :
 --   Aggregates environmental laboratory testing data from vertical rows into a 
 --   horizontal matrix. Reorganizes every physical sample soil core into a single 
---   row, positioning all 122 determinand columns in the exact sequence of the 
---   soil screening sheet.
+--   row, ordering 122 determinand columns into a useful sequence for soil screening.
 --
 --   NON-SPATIAL VARIANT: This query does not join to the LOCA table. It is designed
 --   to run on raw environmental data where coordinate tables are empty or missing.
