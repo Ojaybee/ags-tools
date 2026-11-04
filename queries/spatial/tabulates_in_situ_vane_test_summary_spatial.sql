@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : Tabulates In Situ Vane Test Summary using IVAN group
+-- QUERY FILENAME    : tabulates_in_situ_vane_test_summary_spatial.sql
 -- AUTHOR / ORG      : Richard Meredith / GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
 -- LICENSE           : MIT / Creative Commons CC0 (FOSS-friendly)

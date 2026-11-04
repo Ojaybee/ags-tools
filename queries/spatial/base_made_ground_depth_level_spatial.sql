@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : Depth and Level to Base of Made Ground (Spatially Enabled)
+-- QUERY FILENAME    : base_made_ground_depth_level_spatial.sql
 -- AUTHOR / ORG      : Richard Meredith / GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
 -- LICENSE           : MIT / Creative Commons CC0 (FOSS-friendly)

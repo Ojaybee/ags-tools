@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : ELRG Complete Soil Contamination Pivot Table (Spatially Enabled)
+-- QUERY FILENAME    : elrg_soil_contamination_pivot_table_spatial.sql
 -- AUTHOR / EMAIL    : Richard Meredith / richard.meredith@geo-env.co.uk
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)

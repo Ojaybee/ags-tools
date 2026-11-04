@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : GEOL and DETL Contamination and Odour Search (Spatially Enabled)
+-- QUERY FILENAME    : contam_terms_in_geol_and_detl_spatial.sql
 -- AUTHOR / EMAIL    : Richard Meredith / richard.meredith@geo-env.co.uk
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)

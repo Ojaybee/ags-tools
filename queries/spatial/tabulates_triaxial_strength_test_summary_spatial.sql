@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : Tabulates Triaxial Strength Test Summary using TRIT group
+-- QUERY FILENAME    : tabulates_triaxial_strength_test_summary_spatial.sql
 -- AUTHOR / ORG      : Richard Meredith / GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
 -- LICENSE           : MIT / Creative Commons CC0 (FOSS-friendly)

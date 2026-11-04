@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : Tabulates Standard Penetration Test (SPT) Summary
+-- QUERY FILENAME    : tabulates_standard_penetration_test_spt_summary_spatial.sql
 -- AUTHOR / ORG      : Richard Meredith / GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
 -- LICENSE           : MIT / Creative Commons CC0 (FOSS-friendly)

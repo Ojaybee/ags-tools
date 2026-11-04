@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : GEOL and DETL Geotechnical Hazard & Poor Ground Search
+-- QUERY FILENAME    : geotechnical_hazard_poor_ground_search_spatial.sql
 -- AUTHOR / EMAIL    : Richard Meredith / richard.meredith@geo-env.co.uk
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)

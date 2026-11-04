@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : QGIS Dynamic Borehole Log Label Generator
+-- QUERY FILENAME    : log_label_spatial.sql
 -- AUTHOR / EMAIL    : Richard Meredith / richard.meredith@geo-env.co.uk
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
