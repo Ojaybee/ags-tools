@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : ERES Complete Soil Contamination Pivot Table (Non-Spatial)
+-- QUERY FILENAME    : eres_soil_contamination_pivot_table_no_LOCA.sql
 -- AUTHOR / EMAIL    : Richard Meredith / richard.meredith@geo-env.co.uk
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)

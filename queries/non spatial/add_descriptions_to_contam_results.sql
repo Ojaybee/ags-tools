@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : ERES Stratum Correlation (ERES/GEOL)
+-- QUERY FILENAME    : add_descriptions_to_contam_results.sql
 -- AUTHOR / EMAIL    : Richard Meredith / richard.meredith@geo-env.co.uk
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)

@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : Shallow Grading Analysis Summary (GRAG)
+-- QUERY FILENAME    : sample_descriptions_from_grag_where_depth_lt_3m.sql
 -- AUTHOR / EMAIL    : Richard Meredith / richard.meredith@geo-env.co.uk
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)

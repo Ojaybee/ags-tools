@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : Geological Stratum Summary Table (GEOL)
+-- QUERY FILENAME    : geology_summary_table.sql
 -- AUTHOR / EMAIL    : Richard Meredith / richard.meredith@geo-env.co.uk
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)

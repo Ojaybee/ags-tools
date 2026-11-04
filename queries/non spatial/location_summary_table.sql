@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : Exploratory Hole Location Details (LOCA)
+-- QUERY FILENAME    : location_summary_table.sql
 -- AUTHOR / EMAIL    : Richard Meredith / richard.meredith@geo-env.co.uk
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
