@@ -129,7 +129,7 @@ SELECT
     MAX(CASE WHEN E.ELRG_CODE = '108-88-3' OR E.ELRG_NAME = 'Toluene' THEN E.ELRG_RTXT END) AS "Toluene",
     
     -- (18) Ethylbenzene
-    MAX(CASE WHEN E.ELRG_CODE = '100-41-4' OR E.ELRG_NAME IN ('o-Xylene', 'o-xylene') OR E.ELRG_NAME = 'Ethylbenzene' THEN E.ELRG_RTXT END) AS "Ethylbenzene",
+    MAX(CASE WHEN E.ELRG_CODE = '100-41-4' OR E.ELRG_NAME = 'Ethylbenzene' THEN E.ELRG_RTXT END) AS "Ethylbenzene",
     
     -- (19) O – Xylene
     MAX(CASE WHEN E.ELRG_CODE = '95-47-6' OR E.ELRG_NAME IN ('o-Xylene', 'o-xylene') THEN E.ELRG_RTXT END) AS "O – Xylene",

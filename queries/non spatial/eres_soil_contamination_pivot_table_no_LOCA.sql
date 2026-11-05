@@ -138,7 +138,7 @@ SELECT
     MAX(CASE WHEN E.ERES_CODE = '108-88-3' OR E.ERES_NAME = 'Toluene' THEN E.ERES_RTXT END) AS "Toluene",
     
     -- (18) Ethylbenzene
-    MAX(CASE WHEN E.ERES_CODE = '100-41-4' OR E.ERES_NAME IN ('o-Xylene', 'o-xylene') OR E.ERES_NAME = 'Ethylbenzene' THEN E.ERES_RTXT END) AS "Ethylbenzene",
+    MAX(CASE WHEN E.ERES_CODE = '100-41-4' OR E.ERES_NAME = 'Ethylbenzene' THEN E.ERES_RTXT END) AS "Ethylbenzene",
     
     -- (19) O – Xylene
     MAX(CASE WHEN E.ERES_CODE = '95-47-6' OR E.ERES_NAME IN ('o-Xylene', 'o-xylene') THEN E.ERES_RTXT END) AS "O – Xylene",
