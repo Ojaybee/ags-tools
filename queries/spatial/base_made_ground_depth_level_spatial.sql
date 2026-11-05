@@ -90,30 +90,40 @@ SELECT
     -- 4. Calculated Levels (Dual outputs: Text Warning for auditing, Numeric for Plotting/Contouring)
     
     -- Check if the maximum MG base equals or exceeds the total borehole depth (EOH)
-    CASE 
-        WHEN MAX(MG.Cleaned_Base) >= CAST(NULLIF(L.LOCA_FDEP, '') AS REAL) 
+    -- If the final depth (LOCA_FDEP) or the MG base depth is missing, the base cannot be confirmed
+    CASE
+        WHEN MAX(MG.Cleaned_Base) IS NULL OR CAST(NULLIF(L.LOCA_FDEP, '') AS REAL) IS NULL
+        THEN 'Unknown; missing final depth or MG base'
+        WHEN MAX(MG.Cleaned_Base) >= CAST(NULLIF(L.LOCA_FDEP, '') AS REAL)
         THEN 'MG not bottomed; > ' || L.LOCA_FDEP
         ELSE CAST(ROUND(CAST(NULLIF(L.LOCA_GL, '') AS REAL) - MAX(MG.Cleaned_Base), 2) AS TEXT)
     END AS "Base Reduced Level (m)",
 
     -- Clean numeric elevation column to ensure charting software and contour tools do not break on text warnings
-    CASE 
-        WHEN MAX(MG.Cleaned_Base) >= CAST(NULLIF(L.LOCA_FDEP, '') AS REAL) 
+    CASE
+        WHEN MAX(MG.Cleaned_Base) IS NULL OR CAST(NULLIF(L.LOCA_FDEP, '') AS REAL) IS NULL
+        THEN NULL
+        WHEN MAX(MG.Cleaned_Base) >= CAST(NULLIF(L.LOCA_FDEP, '') AS REAL)
         THEN NULL
         ELSE ROUND(CAST(NULLIF(L.LOCA_GL, '') AS REAL) - MAX(MG.Cleaned_Base), 2)
     END AS "Numeric Base Level (mAOD)",
 
     -- 5. Status & Quality Tagging
-    CASE 
-        WHEN MAX(MG.Cleaned_Base) >= CAST(NULLIF(L.LOCA_FDEP, '') AS REAL) 
+    CASE
+        WHEN MAX(MG.Cleaned_Base) IS NULL OR CAST(NULLIF(L.LOCA_FDEP, '') AS REAL) IS NULL
+        THEN 'Unknown (Missing Depth Data)'
+        WHEN MAX(MG.Cleaned_Base) >= CAST(NULLIF(L.LOCA_FDEP, '') AS REAL)
         THEN 'Uncertain (Not Bottomed)'
         ELSE 'Confirmed Base'
     END AS "Stratum Status",
     
     -- 6. Dynamic 3D Spatial Geometry Construction
-    -- Set geom to NULL if the stratum base was not bottomed, as we cannot identify the actual geometry of the boundary.
+    -- Set geom to NULL if the stratum base was not bottomed or cannot be confirmed (missing depth data),
+    -- as we cannot identify the actual geometry of the boundary.
     -- Otherwise, construct a 3D SpatiaLite geometry point using the calculated Z base level.
-    CASE 
+    CASE
+        WHEN MAX(MG.Cleaned_Base) IS NULL OR CAST(NULLIF(L.LOCA_FDEP, '') AS REAL) IS NULL
+        THEN NULL
         WHEN MAX(MG.Cleaned_Base) >= CAST(NULLIF(L.LOCA_FDEP, '') AS REAL)
         THEN NULL
         ELSE MakePointZ(X(L.geom), Y(L.geom), ROUND(CAST(NULLIF(L.LOCA_GL, '') AS REAL) - MAX(MG.Cleaned_Base), 2), COALESCE(SRID(L.geom), 27700))
