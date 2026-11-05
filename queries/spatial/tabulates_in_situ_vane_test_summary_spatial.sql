@@ -4,7 +4,7 @@
 -- AUTHOR / ORG      : Richard Meredith / GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
 -- LICENSE           : MIT / Creative Commons CC0 (FOSS-friendly)
--- DIALECT           : SQLite / GeoPackage (Optimized for QGIS)
+-- COMPATIBILITY     : QGIS 3.x, GeoPackage (.gpkg) from AGS2DB only. Will not work on SpatiaLite (.sqlite) output.
 -- SOURCE TABLES     : IVAN, LOCA, GEOL
 -- DESCRIPTION       :
 --   Extracts In Situ Vane test details from the IVAN group, pairs them 

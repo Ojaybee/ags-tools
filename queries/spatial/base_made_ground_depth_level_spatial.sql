@@ -4,7 +4,7 @@
 -- AUTHOR / ORG      : Richard Meredith / GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
 -- LICENSE           : MIT / Creative Commons CC0 (FOSS-friendly)
--- DIALECT           : SQLite / GeoPackage (Optimized for QGIS)
+-- COMPATIBILITY     : QGIS 3.x, GeoPackage (.gpkg) from AGS2DB only. Will not work on SpatiaLite (.sqlite) output.
 -- SOURCE TABLES     : GEOL, LOCA
 -- DESCRIPTION       :
 --   Calculates the maximum base depth and 3D Reduced Level of 'Made Ground' (MG).
