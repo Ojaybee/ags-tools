@@ -1,3 +1,4 @@
+-- REQUIRES: GeoPackage (.gpkg) from AGS2DB only. Will not work on SpatiaLite (.sqlite) output.
 SELECT
     ls.LOCA_ID AS "Exploratory Hole Location",
     CAST(it.ISPT_TOP AS FLOAT) AS "Depth to top of test",

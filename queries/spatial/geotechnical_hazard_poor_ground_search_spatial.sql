@@ -5,7 +5,7 @@
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
 -- LICENSE           : GNU GPL v3 (GPL-compatible open-source)
--- COMPATIBILITY     : QGIS 3.x (SpatiaLite / GeoPackage SQLite Provider)
+-- COMPATIBILITY     : QGIS 3.x, GeoPackage (.gpkg) from AGS2DB only. Will not work on SpatiaLite (.sqlite) output.
 -- AGS VERSION       : AGS 4.0.x / 4.1.x
 -- SOURCE TABLES     : GEOL / DETL / LOCA
 -- DESCRIPTION       : Scans both geological layer descriptions (GEOL) and detailed remarks (DETL) for physical, structural, and hydrogeological hazards (such as soft/loose soils, voids, coal, peat, collapses, spalling, obstructions, refusal, blowing sands, and artesian conditions). Joins the unified results with LOCA to populate coordinates, ground elevations, and dynamic reduced levels.

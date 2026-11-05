@@ -1,3 +1,4 @@
+-- REQUIRES: GeoPackage (.gpkg) from AGS2DB only. Will not work on SpatiaLite (.sqlite) output.
 -- Simple/mini borehole logs used for pop up 
 
 -- labelling an exploratory hole location plan. 

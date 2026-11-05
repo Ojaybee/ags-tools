@@ -5,7 +5,7 @@
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
 -- LICENSE           : GNU GPL v3 (GPL-compatible open-source)
--- COMPATIBILITY     : QGIS 3.x (SpatiaLite / GeoPackage SQLite Provider)
+-- COMPATIBILITY     : QGIS 3.x, GeoPackage (.gpkg) from AGS2DB only. Will not work on SpatiaLite (.sqlite) output.
 -- AGS VERSION       : AGS 4.0.x / 4.1.x
 -- SOURCE TABLES     : ELRG / LOCA
 -- DESCRIPTION       : Aggregates alternative environmental laboratory testing data (ELRG) from vertical rows into a horizontal matrix, reorganizing physical soil samples into single rows with 123 determinand columns mapped to spatial coordinates (Easting, Northing, Elevation) and geometry in QGIS while filtering out liquid units.

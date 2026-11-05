@@ -5,7 +5,7 @@
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
 -- LICENSE           : GNU GPL v3 (GPL-compatible open-source)
--- COMPATIBILITY     : QGIS 3.x (SpatiaLite / GeoPackage SQLite Provider)
+-- COMPATIBILITY     : QGIS 3.x, GeoPackage (.gpkg) from AGS2DB only. Will not work on SpatiaLite (.sqlite) output.
 -- AGS VERSION       : AGS 4.0.x / 4.1.x
 -- SOURCE TABLES     : GEOL, LOCA
 -- DESCRIPTION       : Concatenates and formats borehole location details, depth-sequenced stratigraphy intervals (truncated to 500 characters), and final termination depths with elevations (mAOD) into a piped multi-line string for dynamic QGIS map labels.
