@@ -52,14 +52,16 @@
 
 SELECT 
 
-	LOCA_ID AS 'Exploratory Hole ID', SAMP_ID AS 'Sample ID', SPEC_DPTH AS 'Sample Depth (m)', SPEC_DESC AS 'Sample Description'
+-- CAST SPEC_DEPTH as real to convert 0.90m to 0.9
+	LOCA_ID AS "Exploratory Hole ID", SAMP_ID AS "Sample ID", CAST(SPEC_DPTH AS REAL) AS "Sample Depth (m)", SPEC_DESC AS "Sample Description"
 
 FROM GRAG
 
 -- only select samples where sample depth is less than 3m
-	Where SPEC_DPTH < 3.0
+-- CAST SPEC_DEPTH as real to
+	Where CAST(SPEC_DPTH AS REAL) < 3.0
 
 	
 
 --order the data by exploratory hole, then by depth	
-	Order by LOCA_ID, SPEC_DPTH
+	Order by LOCA_ID, CAST(SPEC_DPTH AS REAL);
