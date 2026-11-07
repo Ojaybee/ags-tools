@@ -83,20 +83,20 @@ SELECT
         SELECT G.GEOL_LEG 
         FROM GEOL G 
         WHERE G.LOCA_ID = T.LOCA_ID 
-          AND CAST(NULLIF(COALESCE(T.SPEC_DPTH, T.SAMP_TOP), '') AS REAL) >= CAST(NULLIF(G.GEOL_TOP, '') AS REAL)
-          AND CAST(NULLIF(COALESCE(T.SPEC_DPTH, T.SAMP_TOP), '') AS REAL) <= CAST(NULLIF(G.GEOL_BASE, '') AS REAL)
+          AND CAST(COALESCE(NULLIF(T.SPEC_DPTH, ''), NULLIF(T.SAMP_TOP, '')) AS REAL) >= CAST(NULLIF(G.GEOL_TOP, '') AS REAL)
+          AND CAST(COALESCE(NULLIF(T.SPEC_DPTH, ''), NULLIF(T.SAMP_TOP, '')) AS REAL) <= CAST(NULLIF(G.GEOL_BASE, '') AS REAL)
         ORDER BY CAST(NULLIF(G.GEOL_TOP, '') AS REAL) ASC 
         LIMIT 1
     ) AS "Geology Legend Code (GEOL_LEG)",
     
     -- 4. Depth & Calculated Specimen Levels
     -- Prioritises SPEC_DPTH (specimen-specific depth) and falls back to SAMP_TOP
-    CAST(NULLIF(COALESCE(T.SPEC_DPTH, T.SAMP_TOP), '') AS REAL) AS "Specimen Depth (m)",
+    CAST(COALESCE(NULLIF(T.SPEC_DPTH, ''), NULLIF(T.SAMP_TOP, '')) AS REAL) AS "Specimen Depth (m)",
     
     -- Level calculation: Z = Ground Level - Specimen Depth
     ROUND(
         CAST(NULLIF(L.LOCA_GL, '') AS REAL) - 
-        CAST(NULLIF(COALESCE(T.SPEC_DPTH, T.SAMP_TOP), '') AS REAL), 
+        CAST(COALESCE(NULLIF(T.SPEC_DPTH, ''), NULLIF(T.SAMP_TOP, '')) AS REAL), 
         2
     ) AS "Specimen Level (mAOD)",
 
@@ -107,8 +107,8 @@ SELECT
         SELECT G.GEOL_DESC 
         FROM GEOL G 
         WHERE G.LOCA_ID = T.LOCA_ID 
-          AND CAST(NULLIF(COALESCE(T.SPEC_DPTH, T.SAMP_TOP), '') AS REAL) >= CAST(NULLIF(G.GEOL_TOP, '') AS REAL)
-          AND CAST(NULLIF(COALESCE(T.SPEC_DPTH, T.SAMP_TOP), '') AS REAL) <= CAST(NULLIF(G.GEOL_BASE, '') AS REAL)
+          AND CAST(COALESCE(NULLIF(T.SPEC_DPTH, ''), NULLIF(T.SAMP_TOP, '')) AS REAL) >= CAST(NULLIF(G.GEOL_TOP, '') AS REAL)
+          AND CAST(COALESCE(NULLIF(T.SPEC_DPTH, ''), NULLIF(T.SAMP_TOP, '')) AS REAL) <= CAST(NULLIF(G.GEOL_BASE, '') AS REAL)
         ORDER BY CAST(NULLIF(G.GEOL_TOP, '') AS REAL) ASC 
         LIMIT 1
     ) AS "Sample Geology Description",
