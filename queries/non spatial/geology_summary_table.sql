@@ -49,18 +49,27 @@
 -- (c) Any other liability which cannot be excluded or limited under the laws of 
 --     England and Wales.
 -- ==============================================================================
+-- GEOL_FORM is an optional AGS heading and is often missing from real files.
+-- Defaults supplies a blank GEOL_FORM. The subquery reads GEOL_FORM from GEOL when
+-- the heading exists; when it doesn't, SQLite falls back to Defaults.GEOL_FORM,
+-- so the query runs either way instead of failing with "no such column".
+WITH Defaults AS (
+    SELECT '' AS GEOL_FORM
+)
+
 SELECT 
     -- Rename technical database codes to human readable table headers
-    LOCA_ID AS "Exploratory Hole ID", 
-    GEOL_TOP AS "From (m)", 
-    GEOL_BASE AS "To (m)", 
-    Geol_Desc AS "Stratum Description", 
-    Geol_Form AS "Stratum"
+    G.LOCA_ID AS "Exploratory Hole ID", 
+    G.GEOL_TOP AS "From (m)", 
+    G.GEOL_BASE AS "To (m)", 
+    G.GEOL_DESC AS "Stratum Description", 
+    (SELECT GEOL_FORM FROM GEOL F WHERE F.rowid = G.rowid) AS "Stratum"
 
 FROM 
-    GEOL -- Geology details table
+    GEOL G -- Geology details table
+    CROSS JOIN Defaults
 
 ORDER BY 
-    LOCA_ID, 
+    G.LOCA_ID, 
     -- Enforce numeric sorting on depth so layers sequence properly from the ground surface down
-    CAST(GEOL_TOP AS FLOAT);
+    CAST(G.GEOL_TOP AS FLOAT);
