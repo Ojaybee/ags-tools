@@ -49,8 +49,8 @@ Each dummy file is a cut-down copy of a real source file. Lines are copied uncha
 
 | Hole | Edit | Existing query | Revised query |
 |---|---|---|---|
-| BH94A | `SPEC_DPTH` `0.90` → `0.90m`; `4.20` → `12.00` | Includes 12.00 (text `'12.00' < '3.0'` is true). Order: 0.50, 0.90m, **12.00**, 2.20, 2.80 | 12.00 excluded. Order: 0.50, 0.90m, 2.20, 2.80 |
-| BH90 | none (control: 0.30, 1.20, 2.20, 6.20) | 0.30, 1.20, 2.20 | unchanged |
+| BH94A | `SPEC_DPTH` `0.90` → `0.90m`; `4.20` → `12.00` | Includes 12.00 (text `'12.00' < '3.0'` is true). Order: 0.50, 0.90m, **12.00**, 2.20, 2.80 | 12.00 excluded. Depth shown as a number: 0.5, 0.9, 2.2, 2.8 |
+| BH90 | none (control: 0.30, 1.20, 2.20, 6.20) | 0.30, 1.20, 2.20 | same rows, shown as 0.3, 1.2, 2.2 |
 
 ### C1 test files: optional headings present
 
