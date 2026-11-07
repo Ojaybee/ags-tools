@@ -77,3 +77,11 @@ The two BH94 `DETL_DESC` values (`very gravelly`, `firm`) match neither keyword 
 | geology summary | fails (`no such column: Geol_Form`) | 7 rows, Stratum filled on three |
 
 After the C1 fix, the queries run on TC8086: triaxial 51 rows, SPT 169, contamination 78, geotechnical hazard 94, geology summary 445, all with the optional columns blank.
+
+### `test_S7_geol_rows_out_of_order.ags`
+
+- **Issue:** S7. `log_label_spatial.sql` relies on a subquery `ORDER BY` to stack strata in depth order, which SQLite does not guarantee.
+- **Source:** `TC8086AF4_add4_trit.ags`
+- **Groups:** PROJ, TRAN, ABBR, TYPE, UNIT (copied whole) and LOCA, GEOL (BH90, BH94)
+- **Edit:** no values changed. BH94's GEOL rows are written in reverse depth order (deepest first); BH90's are left in order (control).
+- **Result:** the problem could not be reproduced. Both `log_label_spatial.sql` and `log_label_spatial_alt.sql` list BH94's strata top-down, giving identical labels (SQLite 3.32 and 3.50, on AGS2DB .gpkg output). Keep it as a check that out-of-order rows still come out in depth order.

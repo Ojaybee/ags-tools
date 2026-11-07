@@ -8,6 +8,10 @@
 -- COMPATIBILITY     : QGIS 3.x, GeoPackage (.gpkg) from AGS2DB only. Will not work on SpatiaLite (.sqlite) output.
 -- AGS VERSION       : AGS 4.0.x / 4.1.x
 -- SOURCE TABLES     : GEOL, LOCA
+-- ALTERNATIVE       : log_label_spatial_alt.sql does the same thing and gives the same labels.
+--                     This version sorts strata with ORDER BY inside a subquery, which SQLite
+--                     does not guarantee to keep (tracker issue S7). The _alt version uses an
+--                     ordered window function, which guarantees depth order. Use either.
 -- DESCRIPTION       : Concatenates and formats borehole location details, depth-sequenced stratigraphy intervals (truncated to 500 characters), and final termination depths with elevations (mAOD) into a piped multi-line string for dynamic QGIS map labels.
 -- ==============================================================================
 
