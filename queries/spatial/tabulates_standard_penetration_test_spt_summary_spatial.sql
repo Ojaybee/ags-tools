@@ -118,30 +118,22 @@ SELECT
     -- 7. N-Value Outputs (Dual Formats for Auditing and Plotting)
     I.ISPT_REP AS "Reported SPT N-Value (Raw)",
     
-    -- Cleaned Numeric N-Value for Plotting:
-    -- References the Main Test Drive blow count (ISPT_MAIN) in numerical form,
-    -- removing any potential non-numeric characters to allow SQLite to parse it
-    -- as a numeric float for direct charting and thematic styling in QGIS.
-    CAST(
-        NULLIF(
-            TRIM(
-                REPLACE(
-                    REPLACE(
-                        REPLACE(
-                            REPLACE(
-                                REPLACE(I.ISPT_MAIN, '>', ''), 
-                                '<', ''
-                            ), 
-                            '+', ''
-                        ), 
-                        'Refusal', ''
-                    ), 
-                    'Ref', ''
-                )
-            ), 
-            ''
-        ) AS REAL
-    ) AS "Numeric N-Value (for Plotting)",
+    -- N-Value for Plotting: uses ISPT_NVAL (the SPT N value), NOT ISPT_MAIN.
+    -- ISPT_MAIN is the total blows in the main test drive. For a complete test it equals
+    -- N, but for a refusal it is just the blows at which driving stopped (e.g. 50 after
+    -- only 60mm), which is not an N value and must not be plotted as one.
+    -- Refusals: how they plot depends on how the project specified refusals are recorded.
+    -- Usually ISPT_NVAL is left blank, so the test has no N value here and is not plotted
+    -- (see "Reported SPT N-Value (Raw)" and "Main Blow Count" for the refusal details).
+    -- Some projects specify a method to calculate an extrapolated N value; if that is
+    -- recorded in ISPT_NVAL, it is plotted.
+    -- Only plain numbers are plotted (digits and '.', e.g. 12 or 12.0). Anything else gives
+    -- NULL (not plotted) rather than 0: blank, 'Ref', '>50', '50+', '50/60mm'.
+    CASE
+        WHEN TRIM(I.ISPT_NVAL) GLOB '[0-9]*'            -- starts with a digit
+         AND TRIM(I.ISPT_NVAL) NOT GLOB '*[^0-9.]*'     -- and contains only digits and '.'
+        THEN CAST(I.ISPT_NVAL AS REAL)
+    END AS "N-Value (ISPT_NVAL) for Plotting",
 
     -- 8. Seating and Main Blow Totals
     CAST(NULLIF(I.ISPT_SEAT, '') AS REAL) AS "Seating Blow Count",
