@@ -57,7 +57,7 @@ Each dummy file is a cut-down copy of a real source file. Lines are copied uncha
 - **Issue:** C1. Some queries name optional AGS headings that `TC8086AF4_add4_trit.ags` does not have, so on that file they fail with `no such column`.
 - **Source:** `TC8086AF4_add4_trit.ags`, hole BH94 only. PROJ, TRAN, ABBR, TYPE, UNIT are copied whole.
 - **Edit:** each file adds the missing heading(s) to the end of the group (UNIT blank, TYPE `X`). Only a few rows are filled; the rest are blank. No other values are changed.
-- **Use:** the query fails on `TC8086AF4_add4_trit.ags` and runs on the test file.
+- **Use:** before the C1 fix, each query fails on `TC8086AF4_add4_trit.ags` and runs on the test file. After the fix, both files run: the column is blank on TC8086 and filled on the test file, and the test-file results are identical to the old query.
 
 | File | Groups | Heading added | Rows filled | Query |
 |---|---|---|---|---|
@@ -68,10 +68,12 @@ Each dummy file is a cut-down copy of a real source file. Lines are copied uncha
 
 The two BH94 `DETL_DESC` values (`very gravelly`, `firm`) match neither keyword list. This means the DETL rows are picked up only through `DETL_REM`:
 
-| Query | On TC8086 | On test file |
+| Query | On TC8086 (old query) | On test file |
 |---|---|---|
 | contam terms | fails (`no such column: D.detl_rem`) | 1 row: DETL 2.20–2.70, remark `slight hydrocarbon odour` |
 | geotechnical hazard | fails (`no such column: D.detl_rem`) | 5 rows: 4 GEOL (soft/loose strata) + DETL 9.00–9.70, remark `soft band` |
 | triaxial | fails (`no such column: T.TRIT_REM`) | 6 rows, remark on the first |
 | SPT | fails (`no such column: I.ISPT_METH`) | 5 rows, method on two, remark on one |
 | geology summary | fails (`no such column: Geol_Form`) | 7 rows, Stratum filled on three |
+
+After the C1 fix, the queries run on TC8086: triaxial 51 rows, SPT 169, contamination 78, geotechnical hazard 94, geology summary 445, all with the optional columns blank.

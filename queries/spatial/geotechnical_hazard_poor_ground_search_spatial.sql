@@ -50,7 +50,23 @@
 --     England and Wales.
 -- ==============================================================================
 
-WITH UnifiedGeotech AS (
+-- DETL_REM is an optional AGS heading and is often missing from real files.
+-- Defaults supplies a blank value. The subquery reads DETL_REM from DETL when the
+-- heading exists; when it doesn't, SQLite falls back to Defaults, so the query runs
+-- either way instead of failing with "no such column".
+-- DetlSafe is DETL with a guaranteed detl_rem column; the search below reads from it.
+WITH Defaults AS (
+    SELECT '' AS DETL_REM
+),
+
+DetlSafe AS (
+    SELECT D.loca_id, D.detl_top, D.detl_base, D.detl_desc,
+        (SELECT DETL_REM FROM DETL F WHERE F.rowid = D.rowid) AS detl_rem
+    FROM DETL D
+    CROSS JOIN Defaults
+),
+
+UnifiedGeotech AS (
     -- 1. Extract records matching keywords from the main geological description table (GEOL)
     SELECT
         'GEOL' AS "Source Table",
@@ -96,7 +112,7 @@ WITH UnifiedGeotech AS (
         CAST(NULLIF(D.detl_base, '') AS REAL) AS base_m,
         D.detl_desc AS description,
         D.detl_rem AS remarks
-    FROM DETL D
+    FROM DetlSafe D
     WHERE
         -- Check both detailed description and remarks column
         

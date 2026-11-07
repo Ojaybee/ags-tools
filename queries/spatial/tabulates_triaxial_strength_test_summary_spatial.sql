@@ -59,6 +59,13 @@
 --     England and Wales.
 -- ==============================================================================
 
+-- TRIT_REM is an optional AGS heading and is often missing from real files.
+-- Defaults supplies a blank value. The subquery reads TRIT_REM from TRIT when the
+-- heading exists; when it doesn't, SQLite falls back to Defaults, so the query runs
+-- either way instead of failing with "no such column".
+WITH Defaults AS (
+    SELECT '' AS TRIT_REM
+)
 
 SELECT 
     -- 1. QGIS Unique Feature Identifier
@@ -123,11 +130,12 @@ SELECT
     CAST(NULLIF(T.TRIT_STRN, '') AS REAL) AS "Axial Strain at Failure (%)",
     
     -- Include comments and geometry
-    T.TRIT_REM AS "Test Remarks",
+    (SELECT TRIT_REM FROM TRIT F WHERE F.rowid = T.rowid) AS "Test Remarks",
     L.geom
 
 FROM 
     TRIT T
+    CROSS JOIN Defaults
 
 -- Join location parameters to calculate levels and fetch coordinates
 LEFT JOIN 

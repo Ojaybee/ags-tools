@@ -59,6 +59,13 @@
 --     England and Wales.
 -- ==============================================================================
 
+-- ISPT_METH and ISPT_REM are optional AGS headings and are often missing from real files.
+-- Defaults supplies a blank value for each. The subqueries read the column from the
+-- AGS table when the heading exists; when it doesn't, SQLite falls back to Defaults,
+-- so the query runs either way instead of failing with "no such column".
+WITH Defaults AS (
+    SELECT '' AS ISPT_METH, '' AS ISPT_REM
+)
 
 SELECT 
     -- 1. QGIS Unique Feature Identifier
@@ -106,7 +113,7 @@ SELECT
 
     -- 6. Core SPT Test Specifics (Strictly Mapped to AGS 4 Guidelines)
     I.ISPT_TYPE AS "Test Type (S/C)",
-    I.ISPT_METH AS "Test Standard / Method",
+    (SELECT ISPT_METH FROM ISPT F WHERE F.rowid = I.rowid) AS "Test Standard / Method",
 
     -- 7. N-Value Outputs (Dual Formats for Auditing and Plotting)
     I.ISPT_REP AS "Reported SPT N-Value (Raw)",
@@ -161,13 +168,14 @@ SELECT
     CAST(NULLIF(I.ISPT_ERAT, '') AS REAL) AS "Hammer Energy Ratio (%)",
     CAST(NULLIF(I.ISPT_CAS, '') AS REAL) AS "Casing Depth (m)",
     CAST(NULLIF(I.ISPT_WAT, '') AS REAL) AS "Borehole Water Depth (m)",
-    I.ISPT_REM AS "Test Remarks",
+    (SELECT ISPT_REM FROM ISPT F WHERE F.rowid = I.rowid) AS "Test Remarks",
     
     -- 12. Spatial Geometry Column for plotting directly as a Spatial Layer in QGIS
     L.geom
 
 FROM 
     ISPT I
+    CROSS JOIN Defaults
 
 -- Spatial join with Location parameters
 LEFT JOIN 
