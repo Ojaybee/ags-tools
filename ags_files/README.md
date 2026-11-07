@@ -85,3 +85,16 @@ After the C1 fix, the queries run on TC8086: triaxial 51 rows, SPT 169, contamin
 - **Groups:** PROJ, TRAN, ABBR, TYPE, UNIT (copied whole) and LOCA, GEOL (BH90, BH94)
 - **Edit:** no values changed. BH94's GEOL rows are written in reverse depth order (deepest first); BH90's are left in order (control).
 - **Result:** the problem could not be reproduced. Both `log_label_spatial.sql` and `log_label_spatial_alt.sql` list BH94's strata top-down, giving identical labels (SQLite 3.32 and 3.50, on AGS2DB .gpkg output). Keep it as a check that out-of-order rows still come out in depth order.
+
+### `test_S3_topsoil_not_made_ground.ags`
+
+- **Issue:** S3. `base_made_ground_depth_level_spatial.sql` counted every `GEOL_LEG` code starting with `1` as made ground, including 101 (TOPSOIL).
+- **Source:** `TC8086AF4_add4_trit.ags`
+- **Groups:** PROJ, TRAN, ABBR, TYPE, UNIT (copied whole) and LOCA, GEOL (BH90, BH92, BH94)
+- **Edits** (noted in `GEOL_REM`): BH92 0.00–0.30 `GEOL_LEG` 102 → 101 (topsoil over made ground); BH90 0.50–1.00 `GEOL_LEG` 102 → 103 (another 10x code, still made ground). The `103` code isn't listed in ABBR.
+
+| Hole | Strata | Before S3 fix | After S3 fix |
+|---|---|---|---|
+| BH94 | topsoil (101) only, no edit | **listed:** base 0.20, 65.42 mAOD, Confirmed Base | **not listed** |
+| BH92 | 101 over 102 | base 0.50, 56.80 mAOD, Confirmed Base | unchanged |
+| BH90 | 102, 102, 103 | base 1.00, 59.69 mAOD, Confirmed Base | unchanged (103 still counted) |

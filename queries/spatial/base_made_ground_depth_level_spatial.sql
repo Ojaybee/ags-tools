@@ -17,7 +17,8 @@
 --   unverified boundary intersections from distorting geological models or contours.
 --
 --   ASSUMPTION: Made Ground is identified on the basis of the 'GEOL_LEG' 
---   code starting with the number '1'.
+--   code starting with the number '1', excluding 101 (TOPSOIL). All other
+--   1xx codes (102 MADE GROUND etc.) are treated as forms of Made Ground.
 --
 --   TABLE GENERATION AIM:
 --   Structured specifically to enable clean data visualization, statistical analysis,
@@ -64,7 +65,8 @@
 
 
 WITH MadeGroundRecords AS (
-    -- Filter the GEOL table based on the assumption that codes starting with '1' represent Made Ground
+    -- Filter the GEOL table based on the assumption that codes starting with '1' represent Made Ground,
+    -- except 101 (TOPSOIL), which is natural ground and must not be reported as Made Ground
     SELECT 
         G.LOCA_ID,
         CAST(NULLIF(G.GEOL_BASE, '') AS REAL) AS Cleaned_Base
@@ -72,6 +74,7 @@ WITH MadeGroundRecords AS (
         GEOL G
     WHERE 
         SUBSTR(G.GEOL_LEG, 1, 1) = '1'
+        AND CAST(G.GEOL_LEG AS REAL) <> 101
 )
 
 SELECT 
