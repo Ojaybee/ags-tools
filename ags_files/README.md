@@ -98,3 +98,19 @@ After the C1 fix, the queries run on TC8086: triaxial 51 rows, SPT 169, contamin
 | BH94 | topsoil (101) only, no edit | **listed:** base 0.20, 65.42 mAOD, Confirmed Base | **not listed** |
 | BH92 | 101 over 102 | base 0.50, 56.80 mAOD, Confirmed Base | unchanged |
 | BH90 | 102, 102, 103 | base 1.00, 59.69 mAOD, Confirmed Base | unchanged (103 still counted) |
+
+### `test_B1_end_of_hole.ags`
+
+- **Issue:** B1 (end-of-hole part). `add_descriptions_to_samples.sql`, `add_descriptions_to_contam_results.sql` and `ISPTN.sql` matched `GEOL_TOP <= depth < GEOL_BASE`, so a depth equal to the base of the deepest stratum (the bottom of the hole) matched no stratum.
+- **Source:** `TC8086AF4_add4_trit.ags`
+- **Groups:** PROJ, TRAN, ABBR, TYPE, UNIT (copied whole) and LOCA, GEOL, SAMP, ERES, ISPT (TP43, BH113)
+- **Edit:** TP43 ES sample 10 moved from 1.70 to 2.60 (the base of the hole) in SAMP (`SAMP_BASE` 1.80 cleared) and in its 41 ERES rows (noted in `ERES_REM`). Neither real file has a contam result at the base of a hole, so this edit is needed for the contam query. Everything else is unchanged: TP43 D sample 12 at 2.60 and the BH113 SPT at 3.10 are real end-of-hole records.
+- **TP43 strata:** 0.00–0.10, 0.10–0.55, 0.55–1.60 (102), 1.60–2.60 (528), final depth 2.60. **BH113:** deepest stratum 2.00–3.10, final depth 3.10.
+
+| Query | Record | Before B1 fix | After B1 fix |
+|---|---|---|---|
+| samples | TP43 sample 10 (ES) and 12 (D) at 2.60 | GEOL columns blank | stratum 1.60–2.60, legend 528 |
+| contam results | TP43 sample 10 at 2.60 (41 results) | GEOL columns blank | stratum 1.60–2.60, legend 528 |
+| `ISPTN.sql` | BH113 SPT at 3.10 | missing (2 rows for BH113) | included, group 2 (3 rows) |
+
+Row counts are unchanged for samples (26) and contam results (437). All other rows are identical.
