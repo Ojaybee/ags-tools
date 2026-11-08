@@ -59,7 +59,13 @@ LEFT JOIN
   GEOL
 
 -- Join conditions to find the specific geology layer that contains the sample depth:
+-- Boundary rule (B1): a depth on a boundary between two layers is given the LOWER layer (the one
+-- that starts at that depth). A depth at the base of the deepest layer is given that layer.
 ON
   GEOL.LOCA_ID = ERES.LOCA_ID  -- Match rows where the Location ID from both tables are equal.
   AND CAST(GEOL.GEOL_TOP AS FLOAT) <= CAST(ERES.SAMP_TOP AS FLOAT)  -- Ensure the sample top depth is at or below the top of the geology layer.
-  AND CAST(GEOL.GEOL_BASE AS FLOAT) > CAST(ERES.SAMP_TOP AS FLOAT);  -- Ensure the sample top depth is above the base of the geology layer.
+  AND (
+    CAST(GEOL.GEOL_BASE AS FLOAT) > CAST(ERES.SAMP_TOP AS FLOAT)  -- Depth is above the base of the geology layer,
+    OR (CAST(GEOL.GEOL_BASE AS FLOAT) = CAST(ERES.SAMP_TOP AS FLOAT)  -- or exactly at its base and no layer starts at that depth.
+        AND NOT EXISTS (SELECT 1 FROM GEOL G2 WHERE G2.LOCA_ID = GEOL.LOCA_ID AND CAST(G2.GEOL_TOP AS FLOAT) = CAST(ERES.SAMP_TOP AS FLOAT)))
+  );
