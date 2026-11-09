@@ -8,7 +8,7 @@
 -- COMPATIBILITY     : QGIS 3.x (SpatiaLite / GeoPackage SQLite Provider)
 -- AGS VERSION       : AGS 4.0.x / 4.1.x
 -- SOURCE TABLES     : GRAG
--- DESCRIPTION       : Filters particle size distribution (GRAG) grading test specimens to retrieve shallow results taken from depths less than or equal to 3.0m, ordered by exploratory hole location and specimen depth.
+-- DESCRIPTION       : Filters particle size distribution (GRAG) grading test specimens to retrieve shallow results taken from depths less than 3.0m, ordered by exploratory hole location and specimen depth.
 -- ==============================================================================
 -- ==============================================================================
 -- ⚖️ GNU GPL v3 LICENSE & PROFESSIONAL DISCLAIMER 
