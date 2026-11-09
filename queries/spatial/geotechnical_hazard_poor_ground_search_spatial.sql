@@ -171,7 +171,7 @@ SELECT
     U.description AS "Description",
     U.remarks AS "Comments / Remarks",
     
-    -- Geometry mapping column for QGIS SpatiaLite / GeoPackage Engine
+    -- Geometry mapping column for QGIS GeoPackage
     L.geom
 
 FROM UnifiedGeotech U

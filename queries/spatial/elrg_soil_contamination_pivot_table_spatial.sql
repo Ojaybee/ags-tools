@@ -506,7 +506,7 @@ SELECT
     MAX(CASE WHEN E.ELRG_CODE = '118-74-1' OR E.ELRG_NAME = 'Hexachlorobenzene' THEN E.ELRG_RTXT END) AS "Hexachlorobenzene (HCB) ",
 
 -- STREAMING_CHUNK: Correlating spatial parameters and completing join...
-    -- 16. Geometry mapping column for QGIS SpatiaLite / GeoPackage Engine
+    -- 16. Geometry mapping column for QGIS GeoPackage
     L.geom
 
 FROM 
