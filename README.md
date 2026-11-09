@@ -3,14 +3,14 @@
 ### AGS2DB (AGS → GeoPackage)
 
 **What it does**  
-Converts an AGS4 file into a GIS-ready GeoPackage or SQLite database.
+Converts an AGS4 file into a GIS-ready GeoPackage database.
 
 **Inputs**
 - **Input file**: `.ags` (AGS4).
 
 
 **Output**
-- **GeoPackage** `.gpkg` or **SpatialLite** `.sqlite` 
+- **GeoPackage** `.gpkg`
 
 **How to use**
 1. Open **Processing Toolbox → AGS Tools → AGS2DB**.  
