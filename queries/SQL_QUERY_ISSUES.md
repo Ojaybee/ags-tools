@@ -12,7 +12,7 @@ Issues that affect several files share an ID with a per-file suffix (e.g. `G1a`,
 
 - Each AGS group becomes a table named after the group (`LOCA`, `GEOL`, `ERES`, …).
 - A column is `REAL` only if every non-blank value is numeric; otherwise it is `TEXT`, and blanks are stored as `''`.
-- `LOCA` is a point layer. Its geometry column is `geom` in a GeoPackage (`.gpkg`) but `GEOMETRY` in a SpatiaLite (`.sqlite`) database.
+- `LOCA` is a point layer with geometry column `geom` in the GeoPackage (`.gpkg`). The queries are written for GeoPackage only (K1); AGS2DB's `.sqlite` output names the column `GEOMETRY` and is not supported.
 
 ---
 
@@ -56,16 +56,16 @@ Issues that affect several files share an ID with a per-file suffix (e.g. `G1a`,
 | S10 | `contam_terms_in_geol_and_detl_spatial.sql` | `'% oil%'` misses descriptions that start with "Oil". | Low | Open |
 | S11a | `tabulates_in_situ_vane_test_summary_spatial.sql` | Stratum description column is labelled "Sample Geology Description" but these are in situ tests, not samples. | Low | Open |
 | S11b | `tabulates_standard_penetration_test_spt_summary_spatial.sql` | Same misleading "Sample Geology Description" label (see S11a). | Low | Open |
-| H1a | `base_made_ground_depth_level_spatial.sql` | Header says `LICENSE: MIT / Creative Commons CC0`; repo and other queries are GPL v3. | Low | Open |
-| H1b | `rockhead_depth_level_spatial.sql` | MIT/CC0 licence line (see H1a). | Low | Open |
-| H1c | `tabulates_in_situ_vane_test_summary_spatial.sql` | MIT/CC0 licence line (see H1a). | Low | Open |
-| H1d | `tabulates_standard_penetration_test_spt_summary_spatial.sql` | MIT/CC0 licence line (see H1a). | Low | Open |
-| H1e | `tabulates_triaxial_strength_test_summary_spatial.sql` | MIT/CC0 licence line (see H1a). | Low | Open |
-| H2a | `base_made_ground_depth_level_spatial.sql` | Header layout differs from the other queries: uses `AUTHOR / ORG` (the other 17 do not). **Corrected 2026-11-09:** `DESCRIPTION` is not empty (the text is on the lines below the label) and there is no `DIALECT` line. | Low | Open |
-| H2b | `rockhead_depth_level_spatial.sql` | Different header layout (see H2a); `DESCRIPTION` is not empty. | Low | Open |
-| H2c | `tabulates_in_situ_vane_test_summary_spatial.sql` | Different header layout (see H2a); `DESCRIPTION` is not empty. | Low | Open |
-| H2d | `tabulates_standard_penetration_test_spt_summary_spatial.sql` | Different header layout (see H2a); `DESCRIPTION` is not empty. | Low | Open |
-| H2e | `tabulates_triaxial_strength_test_summary_spatial.sql` | Different header layout (see H2a); `DESCRIPTION` is not empty. | Low | Open |
+| H1a | `base_made_ground_depth_level_spatial.sql` | Header says `LICENSE: MIT / Creative Commons CC0`; repo and other queries are GPL v3. **Fixed 2026-11-09:** the licence is now MIT for all queries and the repo (group decision 2026-11-05). In every query the `LICENSE` line is `MIT`, and the GPL v3 paragraph in the disclaimer block is replaced by the standard MIT notice (copyright line and professional disclaimer points kept). Repo: `LICENSE`, `metadata.txt` and `README.md` changed to MIT. **Follow-up (not in this PR):** the `.py` file headers (plugin code) still say GPL-2.0. | Low | Fixed |
+| H1b | `rockhead_depth_level_spatial.sql` | MIT/CC0 licence line (see H1a). Fixed with H1a. | Low | Fixed |
+| H1c | `tabulates_in_situ_vane_test_summary_spatial.sql` | MIT/CC0 licence line (see H1a). Fixed with H1a. | Low | Fixed |
+| H1d | `tabulates_standard_penetration_test_spt_summary_spatial.sql` | MIT/CC0 licence line (see H1a). Fixed with H1a. | Low | Fixed |
+| H1e | `tabulates_triaxial_strength_test_summary_spatial.sql` | MIT/CC0 licence line (see H1a). Fixed with H1a. | Low | Fixed |
+| H2a | `base_made_ground_depth_level_spatial.sql` | Header layout differs from the other queries: uses `AUTHOR / ORG` (the other 17 do not). **Corrected 2026-11-09:** `DESCRIPTION` is not empty (the text is on the lines below the label) and there is no `DIALECT` line. **Fixed 2026-11-09:** `AUTHOR / ORG` replaced by `AUTHOR / EMAIL` and `ORGANIZATION`, and `AGS VERSION : AGS 4.0.x / 4.1.x` added, so all 20 headed queries now have the same fields in the same order. Every group and heading these queries use was checked against the AGS 4.0.3, 4.0.4, 4.1 and 4.1.1 standard dictionaries. Header comments only; results unchanged. | Low | Fixed |
+| H2b | `rockhead_depth_level_spatial.sql` | Different header layout (see H2a); `DESCRIPTION` is not empty. Fixed with H2a. | Low | Fixed |
+| H2c | `tabulates_in_situ_vane_test_summary_spatial.sql` | Different header layout (see H2a); `DESCRIPTION` is not empty. Fixed with H2a. | Low | Fixed |
+| H2d | `tabulates_standard_penetration_test_spt_summary_spatial.sql` | Different header layout (see H2a); `DESCRIPTION` is not empty. Fixed with H2a. | Low | Fixed |
+| H2e | `tabulates_triaxial_strength_test_summary_spatial.sql` | Different header layout (see H2a); `DESCRIPTION` is not empty. Fixed with H2a. | Low | Fixed |
 | P7b | `tabulates_triaxial_strength_test_summary_spatial.sql` | Leftover `-- STREAMING_CHUNK: ...` generator comments (3). | Low | Open |
 
 ## Non-spatial (`queries/non spatial/`)
@@ -97,8 +97,8 @@ Issues that affect several files share an ID with a per-file suffix (e.g. `G1a`,
 | G1j | `borehole_by_depth_and_geol.sql` | Selects `ls.geom`; fails on `.sqlite` output (see G1a). | High | Fixed |
 | G1k | `ISPTN.sql` | Selects `ls.geom`; fails on `.sqlite` output (see G1a). | High | Fixed |
 | R1 | `borehole_by_depth_and_geol.sql` | `GROUP BY LOCA_ID, GEOL_TOP` with no aggregate functions — arbitrarily hides duplicate rows rather than doing anything useful. | Medium | Open |
-| H4a | `borehole_by_depth_and_geol.sql` | No standard header / `QUERY FILENAME` line; not in the `spatial/` folder or renamed to the naming convention. | Low | Open |
-| H4b | `ISPTN.sql` | No standard header; not in a folder or renamed (see H4a). | Low | Open |
+| H4a | `borehole_by_depth_and_geol.sql` | No standard header / `QUERY FILENAME` line; not in the `spatial/` folder or renamed to the naming convention. The one-line `REQUIRES` note is now `COMPATIBILITY : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)` (K1, MIT licence not yet added); the full standard header is still to do. | Low | Open |
+| H4b | `ISPTN.sql` | No standard header; not in a folder or renamed (see H4a). The one-line `REQUIRES` note is now `COMPATIBILITY : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)` (K1, MIT licence not yet added); the full standard header is still to do. | Low | Open |
 | H3c | `borehole_by_depth_and_geol.sql` | Mixed line endings show as doubled blank lines. | Low | Open |
 | H3d | `ISPTN.sql` | Mixed line endings show as doubled blank lines. | Low | Open |
 
@@ -124,7 +124,7 @@ Laboratory results can come in either AGS group: `ERES` or `ELRG`. Both are need
 
 **Tested 2026-11-09:** every query was run on AGS2DB output for TC8086 and Esholt, in both formats, through QGIS 3.44's own database connections (the OGR/GeoPackage and SpatiaLite connections). Only whether the query runs and its row count were checked, not how results display as a map layer.
 
-**Plan:** one set of queries, written for GeoPackage (`.gpkg`). Say they also work on `.sqlite` only where that is true and useful. The plan for AGS Tools and `.sqlite` is being clarified with the group (user, 2026-11-09). Fix all `COMPATIBILITY` comments together once that is agreed.
+**Plan:** one set of queries, written for GeoPackage (`.gpkg`). Say they also work on `.sqlite` only where that is true and useful. The plan for AGS Tools and `.sqlite` is being clarified with the group (user, 2026-11-09). Fix all `COMPATIBILITY` comments together once that is agreed. **Decided and done 2026-11-09:** GeoPackage only, with no `.sqlite` statements (see K1). The table below records the headers and test results before that change.
 
 | Query | Header says now | `.gpkg` | `.sqlite` |
 |---|---|---|---|
@@ -137,8 +137,8 @@ Laboratory results can come in either AGS group: `ERES` or `ELRG`. Both are need
 
 | ID | Query file | Issue | Severity | Status |
 |---|---|---|---|---|
-| K1 | All queries | `COMPATIBILITY` / `REQUIRES` wording is inconsistent and partly inaccurate. (1) It says "SpatiaLite", but AGS2DB's `.sqlite` output is not SpatiaLite (see K2). (2) Three styles: full header with `COMPATIBILITY` line, one-line `REQUIRES` note (`ISPTN.sql`, `borehole_by_depth_and_geol.sql`, see H4), and a different tool list (`eres_…pivot`). (3) The non-spatial queries do work on `.sqlite` today; the spatial ones fail only because the geometry column is `GEOMETRY`, not `geom` (with it renamed, all ran with the same row counts; `base_made_ground` also uses `X()`/`Y()`, which return NULL on that output). The Background note above ("`GEOMETRY` in a SpatiaLite (`.sqlite`) database") needs the same correction. Resolve all together once the group has agreed the `.sqlite` plan. | Low | Needs decision |
-| K2 | (AGS2DB plugin, not a query) | AGS2DB's "SpatiaLite (*.sqlite)" option does not produce SpatiaLite. `ags_2_db_algorithm.py` sets `options.driverOptions = ["SPATIALITE=YES"]`, but `QgsVectorFileWriter.SaveVectorOptions` has no `driverOptions` (it is `datasourceOptions`), so the option is ignored. The result is plain OGR SQLite: lowercase names, `ogc_fid`, geometry column `GEOMETRY` stored as WKB, no SpatiaLite metadata tables. Recorded here because it decides what the query headers can say; plugin code is out of scope for this PR. | Medium | For Discussion |
+| K1 | All queries | `COMPATIBILITY` / `REQUIRES` wording is inconsistent and partly inaccurate. (1) It says "SpatiaLite", but AGS2DB's `.sqlite` output is not SpatiaLite (see K2). (2) Three styles: full header with `COMPATIBILITY` line, one-line `REQUIRES` note (`ISPTN.sql`, `borehole_by_depth_and_geol.sql`, see H4), and a different tool list (`eres_…pivot`). (3) The non-spatial queries do work on `.sqlite` today; the spatial ones fail only because the geometry column is `GEOMETRY`, not `geom` (with it renamed, all ran with the same row counts; `base_made_ground` also uses `X()`/`Y()`, which return NULL on that output). The Background note above ("`GEOMETRY` in a SpatiaLite (`.sqlite`) database") needs the same correction. Resolve all together once the group has agreed the `.sqlite` plan. **Fixed 2026-11-09 (group decision):** AGS Tools queries are for GeoPackage only, and the headers say nothing about `.sqlite`/SpatiaLite. Every query now has `COMPATIBILITY : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)` (20 headers plus the 2 root files, see H4). The project README no longer says the non-spatial queries work on `.sqlite`. | Low | Fixed |
+| K2 | (AGS2DB plugin, not a query) | AGS2DB's "SpatiaLite (*.sqlite)" option does not produce SpatiaLite. `ags_2_db_algorithm.py` sets `options.driverOptions = ["SPATIALITE=YES"]`, but `QgsVectorFileWriter.SaveVectorOptions` has no `driverOptions` (it is `datasourceOptions`), so the option is ignored. The result is plain OGR SQLite: lowercase names, `ogc_fid`, geometry column `GEOMETRY` stored as WKB, no SpatiaLite metadata tables. Recorded here because it decides what the query headers can say; plugin code is out of scope for this PR. No query refers to `.sqlite` any more (K1), so this is now only about the plugin. | Medium | For Discussion |
 | K3 | `elrg_soil_contamination_pivot_table_spatial.sql` | Never run: neither TC8086 nor Esholt has an `ELRG` table, so the query failed with `no such table: ELRG`. **Fixed (tested 2026-11-09 on .gpkg):** ELRG test data added (`ags_files/123_test_elrg.ags`, user's file; `ags_files/test_ERES_ELRG_pair.ags`). Runs on both: 15 and 10 rows; on the pair file the result is identical to the ERES version. | Medium | Fixed |
 
 ---
