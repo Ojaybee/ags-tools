@@ -56,7 +56,7 @@ Issues that affect several files share an ID with a per-file suffix (e.g. `G1a`,
 | S10 | `contam_terms_in_geol_and_detl_spatial.sql` | `'% oil%'` misses descriptions that start with "Oil". | Low | Open |
 | S11a | `tabulates_in_situ_vane_test_summary_spatial.sql` | Stratum description column is labelled "Sample Geology Description" but these are in situ tests, not samples. | Low | Open |
 | S11b | `tabulates_standard_penetration_test_spt_summary_spatial.sql` | Same misleading "Sample Geology Description" label (see S11a). | Low | Open |
-| H1a | `base_made_ground_depth_level_spatial.sql` | Header says `LICENSE: MIT / Creative Commons CC0`; repo and other queries are GPL v3. **Fixed 2026-11-09:** the licence is now MIT for all queries and the repo (group decision 2026-11-05). In every query the `LICENSE` line is `MIT`, and the GPL v3 paragraph in the disclaimer block is replaced by the standard MIT notice (copyright line and professional disclaimer points kept). Repo: `LICENSE`, `metadata.txt` and `README.md` changed to MIT. **Follow-up (not in this PR):** the `.py` file headers (plugin code) still say GPL-2.0. | Low | Fixed |
+| H1a | `base_made_ground_depth_level_spatial.sql` | Header says `LICENSE: MIT / Creative Commons CC0`; repo and other queries are GPL v3. **Fixed 2026-11-09:** the licence is now MIT for all queries and the repo (group decision 2026-11-05). In every query the `LICENSE` line is `MIT`, and the GPL v3 paragraph in the disclaimer block is replaced by the standard MIT notice (copyright line and professional disclaimer points kept). Repo: `LICENSE`, `metadata.txt` and `README.md` changed to MIT. The `.py` headers of the plugin files (`__init__.py`, `ags_tools.py`, `ags_tools_provider.py`, `ags_validator.py`, `ags_2_db_algorithm.py`) now say MIT. The `test/*.py` files are Plugin Builder boilerplate with other copyright holders and still say GPL. | Low | Fixed |
 | H1b | `rockhead_depth_level_spatial.sql` | MIT/CC0 licence line (see H1a). Fixed with H1a. | Low | Fixed |
 | H1c | `tabulates_in_situ_vane_test_summary_spatial.sql` | MIT/CC0 licence line (see H1a). Fixed with H1a. | Low | Fixed |
 | H1d | `tabulates_standard_penetration_test_spt_summary_spatial.sql` | MIT/CC0 licence line (see H1a). Fixed with H1a. | Low | Fixed |
@@ -97,10 +97,10 @@ Issues that affect several files share an ID with a per-file suffix (e.g. `G1a`,
 | G1j | `borehole_by_depth_and_geol.sql` | Selects `ls.geom`; fails on `.sqlite` output (see G1a). | High | Fixed |
 | G1k | `ISPTN.sql` | Selects `ls.geom`; fails on `.sqlite` output (see G1a). | High | Fixed |
 | R1 | `borehole_by_depth_and_geol.sql` | `GROUP BY LOCA_ID, GEOL_TOP` with no aggregate functions — arbitrarily hides duplicate rows rather than doing anything useful. | Medium | Open |
-| H4a | `borehole_by_depth_and_geol.sql` | No standard header / `QUERY FILENAME` line; not in the `spatial/` folder or renamed to the naming convention. The one-line `REQUIRES` note is now `COMPATIBILITY : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)` (K1, MIT licence not yet added); the full standard header is still to do. | Low | Open |
-| H4b | `ISPTN.sql` | No standard header; not in a folder or renamed (see H4a). The one-line `REQUIRES` note is now `COMPATIBILITY : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)` (K1, MIT licence not yet added); the full standard header is still to do. | Low | Open |
-| H3c | `borehole_by_depth_and_geol.sql` | Mixed line endings show as doubled blank lines. | Low | Open |
-| H3d | `ISPTN.sql` | Mixed line endings show as doubled blank lines. | Low | Open |
+| H4a | `borehole_by_depth_and_geol.sql` | No standard header / `QUERY FILENAME` line; not in the `spatial/` folder or renamed to the naming convention. The one-line `REQUIRES` note is now `COMPATIBILITY : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)` (K1). **Header added 2026-11-09:** full standard header and MIT disclaimer block (author Oliver Burdekin / burdGIS, from the first commit). Moving into a folder / renaming is still to do. | Low | Open |
+| H4b | `ISPTN.sql` | No standard header; not in a folder or renamed (see H4a). The one-line `REQUIRES` note is now `COMPATIBILITY : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)` (K1). Header added with H4a; moving / renaming still to do. | Low | Open |
+| H3c | `borehole_by_depth_and_geol.sql` | Mixed line endings show as doubled blank lines. **Rechecked 2026-11-09:** line endings are now all CRLF. The blank line between every SQL line is real (one in the file), so this is only layout tidying. | Low | Open |
+| H3d | `ISPTN.sql` | Mixed line endings show as doubled blank lines. **Rechecked 2026-11-09:** already fixed: all CRLF, no doubled lines (the file was rewritten for B1). | Low | Fixed |
 
 ---
 
