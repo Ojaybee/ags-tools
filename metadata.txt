@@ -36,7 +36,7 @@ category=Analysis
 icon=icon.png
 # experimental flag
 experimental=False
-license=GPL-2.0-or-later
+license=MIT
 
 
 # deprecated flag (applies to the whole plugin, not just a single version)
