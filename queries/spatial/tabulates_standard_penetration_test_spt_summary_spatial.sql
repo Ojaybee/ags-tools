@@ -85,7 +85,10 @@ SELECT
         WHERE G.LOCA_ID = I.LOCA_ID 
           AND CAST(NULLIF(I.ISPT_TOP, '') AS REAL) >= CAST(NULLIF(G.GEOL_TOP, '') AS REAL)
           AND CAST(NULLIF(I.ISPT_TOP, '') AS REAL) <= CAST(NULLIF(G.GEOL_BASE, '') AS REAL)
-        ORDER BY CAST(NULLIF(G.GEOL_TOP, '') AS REAL) ASC 
+        -- Boundary rule (B1): a depth on a boundary matches both strata; DESC picks the lower
+        -- one, i.e. the stratum that starts at that depth (the test is in the ground below it).
+        -- At the base of the hole only the last stratum matches, so it is still found.
+        ORDER BY CAST(NULLIF(G.GEOL_TOP, '') AS REAL) DESC 
         LIMIT 1
     ) AS "Geology Legend Code (GEOL_LEG)",
 
@@ -107,7 +110,10 @@ SELECT
         WHERE G.LOCA_ID = I.LOCA_ID 
           AND CAST(NULLIF(I.ISPT_TOP, '') AS REAL) >= CAST(NULLIF(G.GEOL_TOP, '') AS REAL)
           AND CAST(NULLIF(I.ISPT_TOP, '') AS REAL) <= CAST(NULLIF(G.GEOL_BASE, '') AS REAL)
-        ORDER BY CAST(NULLIF(G.GEOL_TOP, '') AS REAL) ASC 
+        -- Boundary rule (B1): a depth on a boundary matches both strata; DESC picks the lower
+        -- one, i.e. the stratum that starts at that depth (the test is in the ground below it).
+        -- At the base of the hole only the last stratum matches, so it is still found.
+        ORDER BY CAST(NULLIF(G.GEOL_TOP, '') AS REAL) DESC 
         LIMIT 1
     ) AS "Sample Geology Description",
 
