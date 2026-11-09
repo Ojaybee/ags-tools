@@ -49,7 +49,7 @@ Issues that affect several files share an ID with a per-file suffix (e.g. `G1a`,
 | B1a | `tabulates_in_situ_vane_test_summary_spatial.sql` | Stratum lookup used `top <= depth <= base` with `ORDER BY GEOL_TOP ASC LIMIT 1`, so it took the upper stratum at a boundary; non-spatial queries and `ISPTN.sql` used `top <= depth < base` (lower stratum, but nothing at the base of the hole). **Fix (option A, user decision 2026-11-07):** one rule everywhere: a depth on a boundary between two strata is given the **lower** stratum (the one that starts at that depth, since the test or sample is in the ground below it); a depth at the base of the deepest stratum is given that stratum. Spatial lookups: `ASC` → `DESC` (the `<= base` keeps the end-of-hole match). **Effect:** TC8086 14 of 100 vane rows change stratum; Esholt none. | Medium | Fixed |
 | B1b | `tabulates_standard_penetration_test_spt_summary_spatial.sql` | Boundary rule differed (see B1a). **Fix:** `ASC` → `DESC` (see B1a). **Effect:** TC8086 54 of 169 SPTs change stratum, Esholt 32 of 143 (exactly the tests on a boundary). | Medium | Fixed |
 | B1c | `tabulates_triaxial_strength_test_summary_spatial.sql` | Boundary rule differed (see B1a). **Fix:** `ASC` → `DESC` (see B1a). **Effect:** TC8086 3 of 51 rows (one specimen depth) change description. | Medium | Fixed |
-| S6 | `rockhead_depth_level_spatial.sql` | Assumes `GEOL_LEG LIKE '8%'` means bedrock. Check against the legend scheme. | Medium | Needs decision |
+| S6 | `rockhead_depth_level_spatial.sql` | Assumes `GEOL_LEG LIKE '8%'` means bedrock. Check against the legend scheme. **No change needed (confirmed by user 2026-11-09):** bedrock legend codes are 801–820, all starting with 8, and no other code in the scheme starts with 8. `LIKE` also works when AGS2DB stores `GEOL_LEG` as a number (803.0 is compared as '803.0'). Checked: `LIKE '8%'` and 801–820 select the same strata (TC8086 165, Esholt 47); 9 rockhead holes in each. Esholt core-loss strata (998) below rockhead are correctly ignored. Note: if core loss (998) were logged at the top of rock, rockhead would be the first recovered rock stratum below it. | Low | Won't fix |
 | S7 | `log_label_spatial.sql` | Relies on `GROUP_CONCAT` keeping the inner subquery's `ORDER BY` — SQLite doesn't guarantee this, so strata could appear out of order. **Not reproducible:** with strata stored out of order (`ags_files/test_S7_geol_rows_out_of_order.ags`), SQLite 3.32 and 3.50 still return depth order. **Resolved:** original kept; `log_label_spatial_alt.sql` added, which uses an ordered window `GROUP_CONCAT` (guaranteed order). Both give identical labels on TC8086, Esholt and the S7 test file; each file's header points to the other (user decision 2026-11-07). | Medium | Fixed |
 | S8 | `log_label_spatial.sql` | Casts `GEOL_TOP` but not `GEOL_BASE`, so depth formats can differ; holes with no GEOL rows are dropped by the inner join. | Low | Open |
 | S9 | `geotechnical_hazard_poor_ground_search_spatial.sql` | Keyword false positives: `%blow%` matches SPT "blows", `%void%` matches "avoid". `%highly organic%` is redundant with `%organic%`. | Low | Open |
@@ -101,6 +101,28 @@ Issues that affect several files share an ID with a per-file suffix (e.g. `G1a`,
 | H4b | `ISPTN.sql` | No standard header; not in a folder or renamed (see H4a). | Low | Open |
 | H3c | `borehole_by_depth_and_geol.sql` | Mixed line endings show as doubled blank lines. | Low | Open |
 | H3d | `ISPTN.sql` | Mixed line endings show as doubled blank lines. | Low | Open |
+
+---
+
+## Compatibility (GeoPackage / SQLite) — all queries
+
+**Tested 2026-11-09:** every query was run on AGS2DB output for TC8086 and Esholt, in both formats, through QGIS 3.44's own database connections (the OGR/GeoPackage and SpatiaLite connections). Only whether the query runs and its row count were checked, not how results display as a map layer.
+
+**Plan:** one set of queries, written for GeoPackage (`.gpkg`). Say they also work on `.sqlite` only where that is true and useful. The plan for AGS Tools and `.sqlite` is being clarified with the group (user, 2026-11-09). Fix all `COMPATIBILITY` comments together once that is agreed.
+
+| Query | Header says now | `.gpkg` | `.sqlite` |
+|---|---|---|---|
+| Non-spatial: `add_descriptions_to_contam_results`, `add_descriptions_to_samples`, `geology_summary_table`, `location_summary_table`, `sample_descriptions_from_grag_…`, `select_from_grag_…` | `QGIS 3.x (SpatiaLite / GeoPackage SQLite Provider)` | runs | runs, same rows |
+| `eres_soil_contamination_pivot_table_no_LOCA` | `SQLite / GeoPackage / DBeaver / QGIS Virtual Layers` | runs | runs, same rows (DBeaver and Virtual Layers not tested) |
+| Spatial (all in `spatial/` except ELRG) | `GeoPackage (.gpkg) from AGS2DB only. Will not work on SpatiaLite (.sqlite) output.` | runs (triaxial needs a TRIT table) | fails: `no such column: L.geom` |
+| `ISPTN.sql`, `borehole_by_depth_and_geol.sql` | one-line `REQUIRES: GeoPackage (.gpkg) from AGS2DB only…` | runs | fails: `no such column: ls.geom` |
+| `elrg_soil_contamination_pivot_table_spatial` | GeoPackage only | not tested (no ELRG table in either file) | not tested |
+
+| ID | Query file | Issue | Severity | Status |
+|---|---|---|---|---|
+| K1 | All queries | `COMPATIBILITY` / `REQUIRES` wording is inconsistent and partly inaccurate. (1) It says "SpatiaLite", but AGS2DB's `.sqlite` output is not SpatiaLite (see K2). (2) Three styles: full header with `COMPATIBILITY` line, one-line `REQUIRES` note (`ISPTN.sql`, `borehole_by_depth_and_geol.sql`, see H4), and a different tool list (`eres_…pivot`). (3) The non-spatial queries do work on `.sqlite` today; the spatial ones fail only because the geometry column is `GEOMETRY`, not `geom` (with it renamed, all ran with the same row counts; `base_made_ground` also uses `X()`/`Y()`, which return NULL on that output). The Background note above ("`GEOMETRY` in a SpatiaLite (`.sqlite`) database") needs the same correction. Resolve all together once the group has agreed the `.sqlite` plan. | Low | Needs decision |
+| K2 | (AGS2DB plugin, not a query) | AGS2DB's "SpatiaLite (*.sqlite)" option does not produce SpatiaLite. `ags_2_db_algorithm.py` sets `options.driverOptions = ["SPATIALITE=YES"]`, but `QgsVectorFileWriter.SaveVectorOptions` has no `driverOptions` (it is `datasourceOptions`), so the option is ignored. The result is plain OGR SQLite: lowercase names, `ogc_fid`, geometry column `GEOMETRY` stored as WKB, no SpatiaLite metadata tables. Recorded here because it decides what the query headers can say; plugin code is out of scope for this PR. | Medium | For Discussion |
+| K3 | `elrg_soil_contamination_pivot_table_spatial.sql` | Never run: neither TC8086 nor Esholt has an `ELRG` table, so the query fails with `no such table: ELRG` on both formats. Needs an AGS file with ELRG data before its compatibility (or anything else) can be confirmed. | Medium | Open |
 
 ---
 
