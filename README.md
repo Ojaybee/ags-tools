@@ -51,7 +51,7 @@ Validates an AGS4 file against the selected dictionary using the **BGS AGSAPI**,
 There are some example SQL queries e.g. geology_summary_table which can be accessed via the Database then DB Manager menus. Scripts are loaded from C:\Users\user_name\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\ags_tools\queries
 You will need to change user_name to your own user name.
 
-Spatial queries (those in `queries/spatial`, plus `borehole_by_depth_and_geol.sql` and `ISPTN.sql`) use the LOCA `geom` column, so they need a **GeoPackage (.gpkg)** created by AGS2DB. They will not work on a SpatiaLite (.sqlite) output, where the geometry column is named `GEOMETRY`. The non-spatial queries work with either format.
+Spatial queries (those in `queries/spatial`, plus `borehole_by_depth_and_geol.sql` and `ISPTN.sql`) use the LOCA `geom` column, so they need a **GeoPackage (.gpkg)** created by AGS2DB.
 ---
 
 ## Contributing
@@ -103,7 +103,7 @@ Please follow the style and structure already used in the plugin. Keep changes a
 
 ### Licensing & attribution
 
-This plugin is licensed **GPL-2.0-or-later**.  
+This plugin is licensed **MIT**.  
 It uses the British Geological Survey **AGSAPI**.  
 *Contains public sector information licensed under the Open Government Licence v3.0.*  
 See the OGL: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
