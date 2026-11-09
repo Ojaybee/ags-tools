@@ -101,7 +101,7 @@ After the C1 fix, the queries run on TC8086: triaxial 51 rows, SPT 169, contamin
 
 ### `test_B1_end_of_hole.ags`
 
-- **Issue:** B1 (end-of-hole part). `add_descriptions_to_samples.sql`, `add_descriptions_to_contam_results.sql` and `ISPTN.sql` matched `GEOL_TOP <= depth < GEOL_BASE`, so a depth equal to the base of the deepest stratum (the bottom of the hole) matched no stratum.
+- **Issue:** B1 (end-of-hole part). `add_descriptions_to_samples.sql`, `add_descriptions_to_eres_contam_results.sql` (then named `add_descriptions_to_contam_results.sql`) and `ISPTN.sql` matched `GEOL_TOP <= depth < GEOL_BASE`, so a depth equal to the base of the deepest stratum (the bottom of the hole) matched no stratum.
 - **Source:** `TC8086AF4_add4_trit.ags`
 - **Groups:** PROJ, TRAN, ABBR, TYPE, UNIT (copied whole) and LOCA, GEOL, SAMP, ERES, ISPT (TP43, BH113)
 - **Edit:** TP43 ES sample 10 moved from 1.70 to 2.60 (the base of the hole) in SAMP (`SAMP_BASE` 1.80 cleared) and in its 41 ERES rows (noted in `ERES_REM`). Neither real file has a contam result at the base of a hole, so this edit is needed for the contam query. Everything else is unchanged: TP43 D sample 12 at 2.60 and the BH113 SPT at 3.10 are real end-of-hole records.
@@ -114,3 +114,29 @@ After the C1 fix, the queries run on TC8086: triaxial 51 rows, SPT 169, contamin
 | `ISPTN.sql` | BH113 SPT at 3.10 | missing (2 rows for BH113) | included, group 2 (3 rows) |
 
 Row counts are unchanged for samples (26) and contam results (437). All other rows are identical.
+
+### `123_test_elrg.ags` (supplied by user)
+
+- **Purpose:** ELRG laboratory results, for the ELRG queries (tracker K3, E1). Not cut from TC8086.
+- **Groups:** PROJ, ABBR, DICT, LOCA, SAMP, TRAN, UNIT, TYPE, ELRG. **No GEOL**, and LOCA has no coordinates or ground levels.
+- **ELRG:** 255 rows, 15 holes (TP1–TP13, WS1, WS2), one sample each, all `mg/kg`. `ELRG_CODE` is `not extracted` throughout (see ABBR), so determinands are matched by `ELRG_NAME` only.
+
+| Query | Result |
+|---|---|
+| `elrg_soil_contamination_pivot_table_no_LOCA.sql` | 15 rows; 16 of the 17 determinand names fill a column ("Total EPA-16 PAHs" has no column) |
+| `elrg_soil_contamination_pivot_table_spatial.sql` | 15 rows, same values; Easting/Northing/level and geometry blank (no coordinates) |
+| `add_descriptions_to_elrg_contam_results.sql` | fails: `no such table: GEOL` (use `test_ERES_ELRG_pair.ags`) |
+
+### `test_ERES_ELRG_pair.ags`
+
+- **Issue:** E1. Checks that each ERES query and its ELRG companion give the same results.
+- **Source:** `TC8086AF4_add4_trit.ags` (ERES), with ELRG headings taken from `123_test_elrg.ags`
+- **Groups:** PROJ, TRAN, ABBR, TYPE, UNIT (copied whole) and LOCA, GEOL, SAMP, ERES (TP43, BH113, TP52, BH94), plus a new ELRG group
+- **Edit:** the ELRG group holds a copy of all 482 ERES rows. Each `ERES_x` value goes to `ELRG_x` (CODE, METH, MATX, RTYP, RUNI, LQLF, RVAL, RTXT, NAME); `ERES_RDLM` (reported detection limit) goes to `ELRG_RDLM`, a heading added after `ELRG_MDLM` because `123_test_elrg.ags` does not have it (unit blank, type `U`, as for `ERES_RDLM`). `ELRG_MDLM` (method detection limit) is blank, because TC8086 has no `ERES_MDLM`. `ELRG_TADE` and `ELRG_TICN` are blank. ERES headings with no ELRG equivalent are not copied.
+
+| Query pair (ERES / ELRG) | Result |
+|---|---|
+| pivot, non-spatial | 10 rows each, identical |
+| pivot, spatial | 10 rows each, identical |
+| add stratum descriptions | 482 rows each, identical strata (the query uses `SELECT *`, so the ELRG version shows 28 columns against 34 for ERES, because ELRG has fewer headings) |
+
