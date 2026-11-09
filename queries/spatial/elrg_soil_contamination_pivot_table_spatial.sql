@@ -8,6 +8,9 @@
 -- COMPATIBILITY     : QGIS 3.x, GeoPackage (.gpkg) from AGS2DB only. Will not work on SpatiaLite (.sqlite) output.
 -- AGS VERSION       : AGS 4.0.x / 4.1.x
 -- SOURCE TABLES     : ELRG / LOCA
+-- COMPANIONS        : Same query on the other lab results group: eres_soil_contamination_pivot_table_spatial.sql.
+--                     Non-spatial version: elrg_soil_contamination_pivot_table_no_LOCA.sql.
+--                     All four share the same pivot logic; a fix to one should be made to all four.
 -- DESCRIPTION       : Aggregates alternative environmental laboratory testing data (ELRG) from vertical rows into a horizontal matrix, reorganizing physical soil samples into single rows with 123 determinand columns mapped to spatial coordinates (Easting, Northing, Elevation) and geometry in QGIS while filtering out liquid units.
 -- ==============================================================================
 

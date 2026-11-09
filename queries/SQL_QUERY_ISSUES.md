@@ -34,7 +34,7 @@ Issues that affect several files share an ID with a per-file suffix (e.g. `G1a`,
 | P3a | `elrg_soil_contamination_pivot_table_spatial.sql` | `ELRG_RUNI NOT IN ('mg/l','ug/l')` is case-sensitive (keeps `mg/L`, `ug/L`, `µg/l`) and silently drops all rows where the unit is NULL. | High | Parked |
 | P8a | `elrg_soil_contamination_pivot_table_spatial.sql` | Results in different units (e.g. `mg/kg` and `ug/kg`) go into the same column with no conversion. `TC8086AF4_add4_trit.ags` ERES has 1947 `mg/kg` and 329 `ug/kg` rows. | High | Parked |
 | P4a | `elrg_soil_contamination_pivot_table_spatial.sql` | Summed columns ("Aliphatic EC >16-35", "Chlorophenols (excluding PCP)") strip `<` and add detection limits as if they were measured values; the result loses its `<` qualifier. **Won't fix — by design:** `<` values are taken at their limit value (e.g. `<2` → 2) for screening; confirmed by user 2026-11-05. | High | Won't fix |
-| P5a | `elrg_soil_contamination_pivot_table_spatial.sql` | Reads the `ELRG` table, while the non-spatial version reads `ERES`. Otherwise the two are the same query. Confirm which AGS group is intended. | Medium | Needs decision |
+| P5a | `elrg_soil_contamination_pivot_table_spatial.sql` | Reads the `ELRG` table, while the non-spatial version reads `ERES`. Otherwise the two are the same query. Confirm which AGS group is intended. **Resolved (user 2026-11-09):** both groups are needed. Companion queries created so each group has a spatial and a non-spatial pivot (see E1). | Medium | Fixed |
 | P6a | `elrg_soil_contamination_pivot_table_spatial.sql` | "Chromium (trivalent)" is actually total chromium (CAS 7440-47-3). Many column aliases have trailing/double spaces, awkward to reference in QGIS. | Low | Open |
 | P7a | `elrg_soil_contamination_pivot_table_spatial.sql` | Leftover `-- STREAMING_CHUNK: ...` generator comments (14). | Low | Open |
 | S1 | `base_made_ground_depth_level_spatial.sql` | If `LOCA_FDEP` is NULL, `MAX(base) >= NULL` is NULL, so the hole is reported as "Confirmed Base" and given a geometry. Should be "Unknown". Test file: `ags_files/test_S1_made_ground_missing_depths.ags`. | High | Fixed |
@@ -77,15 +77,15 @@ Issues that affect several files share an ID with a per-file suffix (e.g. `G1a`,
 | P3b | `eres_soil_contamination_pivot_table_no_LOCA.sql` | Liquid-unit filter is case-sensitive and drops NULL units (see P3a). | High | Parked |
 | P8b | `eres_soil_contamination_pivot_table_no_LOCA.sql` | Mixed `mg/kg` / `ug/kg` units in the same column (see P8a). | High | Parked |
 | P4b | `eres_soil_contamination_pivot_table_no_LOCA.sql` | Summed columns add detection limits as measured values (see P4a). **Won't fix — by design:** `<` values are taken at their limit value (e.g. `<2` → 2) for screening; confirmed by user 2026-11-05. | High | Won't fix |
-| P5b | `eres_soil_contamination_pivot_table_no_LOCA.sql` | Reads `ERES` while spatial version reads `ELRG` (see P5a). | Medium | Needs decision |
+| P5b | `eres_soil_contamination_pivot_table_no_LOCA.sql` | Reads `ERES` while spatial version reads `ELRG` (see P5a). **Resolved:** both groups needed; companions created (see E1). | Medium | Fixed |
 | P6b | `eres_soil_contamination_pivot_table_no_LOCA.sql` | "Chromium (trivalent)" is total Cr; trailing spaces in aliases (see P6a). Description says 122 columns, spatial says 123. | Low | Open |
 | N1 | `sample_descriptions_from_grag_where_depth_lt_3m.sql` | `WHERE SPEC_DPTH < 3.0` and `ORDER BY SPEC_DPTH` have no `CAST`. If the column is stored as TEXT, the comparison is textual (`'10.5' < '3.0'` is true) and the sort is alphabetical. Test file: `ags_files/test_N1_grag_text_depths.ags`. | High | Fixed |
 | N2 | `sample_descriptions_from_grag_where_depth_lt_3m.sql` | Single-quoted column aliases (`'Sample ID'`) instead of double quotes; missing final `;`. | Low | Fixed |
 | C1e | `geology_summary_table.sql` | Selects `GEOL_FORM`, absent from `TC8086AF4_add4_trit.ags` → query fails (see C1a). Test file with the heading: `ags_files/test_C1e_geol_form.ags`. **Fix:** `GEOL_FORM` read via a subquery with a blank default (`Defaults` CTE), so the query runs with or without the heading; tested on AGS2DB .gpkg output of both files. | High | Fixed |
 | N3 | `select_from_grag_where_sample_depth_lt_3m_orderby_LOCA_ID_and_depth.sql` | Uses `<= 3.0` although the filename says `lt` (the other GRAG query uses `<`). The two GRAG queries are near-duplicates — decide which to keep and which threshold. | Medium | Needs decision |
-| N4 | `add_descriptions_to_contam_results.sql` | `SELECT *` over a join gives duplicate `LOCA_ID` (and `fid` in GeoPackage) columns, which can upset QGIS when loading as a layer. **Won't fix (re-graded Low after testing on AGS2DB .gpkg):** QGIS/OGR keeps the first copy of a duplicated column, so `LOCA_ID` and `fid` come from ERES and are always populated and unique. Only GEOL's copies of headings shared with ERES are dropped when loaded as a layer (e.g. `FILE_FSET` in Esholt). Confirmed by user 2026-11-07. | Low | Won't fix |
+| N4 | `add_descriptions_to_eres_contam_results.sql` | `SELECT *` over a join gives duplicate `LOCA_ID` (and `fid` in GeoPackage) columns, which can upset QGIS when loading as a layer. **Won't fix (re-graded Low after testing on AGS2DB .gpkg):** QGIS/OGR keeps the first copy of a duplicated column, so `LOCA_ID` and `fid` come from ERES and are always populated and unique. Only GEOL's copies of headings shared with ERES are dropped when loaded as a layer (e.g. `FILE_FSET` in Esholt). Confirmed by user 2026-11-07. | Low | Won't fix |
 | N5 | `add_descriptions_to_samples.sql` | `SELECT *` gives duplicate `LOCA_ID` / `fid` columns (see N4). **Won't fix (re-graded Low after testing on AGS2DB .gpkg):** QGIS/OGR keeps the first copy of a duplicated column, so `LOCA_ID` and `fid` come from SAMP and are always populated and unique. Only GEOL's copies of headings shared with SAMP are dropped when loaded as a layer (e.g. `FILE_FSET`, `GEOL_STAT` in Esholt). Confirmed by user 2026-11-07. | Low | Won't fix |
-| B1d | `add_descriptions_to_contam_results.sql` | Boundary rule `top <= depth < base` differed from the spatial test queries (see B1a) and gave no stratum at the base of the hole. **Fix:** keeps `< base`, and also matches `= base` when no stratum starts at that depth (so there is never more than one match). **Effect:** none on TC8086 or Esholt (already the lower stratum; no results at the base of a hole). Test file: `ags_files/test_B1_end_of_hole.ags` (TP43 contam sample moved to the base of the hole). | Medium | Fixed |
+| B1d | `add_descriptions_to_eres_contam_results.sql` | Boundary rule `top <= depth < base` differed from the spatial test queries (see B1a) and gave no stratum at the base of the hole. **Fix:** keeps `< base`, and also matches `= base` when no stratum starts at that depth (so there is never more than one match). **Effect:** none on TC8086 or Esholt (already the lower stratum; no results at the base of a hole). Test file: `ags_files/test_B1_end_of_hole.ags` (TP43 contam sample moved to the base of the hole). | Medium | Fixed |
 | B1e | `add_descriptions_to_samples.sql` | Boundary rule differed from spatial test queries (see B1a). **Fix:** as B1d. Also applied to `ISPTN.sql`. **Effect:** TC8086: 12 samples at the base of a hole now get a description (blank 18 → 6), row count unchanged (1104); `ISPTN.sql` now includes the SPT at the base of a hole (168 → 169 rows). Esholt: no change. | Medium | Fixed |
 | H3a | `add_descriptions_to_samples.sql` | CR-only (old Mac) line endings — git and many tools show the whole file as one line, so any edit shows as the whole file changed. **Fix:** converted to CRLF like the other queries; line endings only, text unchanged. Results identical (TC8086 1104 rows, Esholt 459). | Low | Fixed |
 | H3b | `select_from_grag_where_sample_depth_lt_3m_orderby_LOCA_ID_and_depth.sql` | CR-only line endings (see H3a). **Fix:** converted to CRLF (see H3a). Results identical (TC8086 72 rows, Esholt 4). | Low | Fixed |
@@ -104,6 +104,22 @@ Issues that affect several files share an ID with a per-file suffix (e.g. `G1a`,
 
 ---
 
+## ERES / ELRG companion queries
+
+Laboratory results can come in either AGS group: `ERES` or `ELRG`. Both are needed (user, 2026-11-09), so each ERES query has an ELRG companion, and every file name says which group it reads. Each pair is the same SQL with the group name and heading prefix swapped (`ERES_CODE` ↔ `ELRG_CODE` …). Each header has a `COMPANION(S)` line, and a fix to one file should be made to its companions.
+
+| Query | ERES | ELRG |
+|---|---|---|
+| Pivot, non-spatial | `non spatial/eres_soil_contamination_pivot_table_no_LOCA.sql` | `non spatial/elrg_soil_contamination_pivot_table_no_LOCA.sql` (**new**) |
+| Pivot, spatial | `spatial/eres_soil_contamination_pivot_table_spatial.sql` (**new**) | `spatial/elrg_soil_contamination_pivot_table_spatial.sql` |
+| Add stratum descriptions | `non spatial/add_descriptions_to_eres_contam_results.sql` (**renamed** from `add_descriptions_to_contam_results.sql`) | `non spatial/add_descriptions_to_elrg_contam_results.sql` (**new**) |
+
+| ID | Query file | Issue | Severity | Status |
+|---|---|---|---|---|
+| E1 | the six files above | ELRG had only a spatial pivot and ERES only a non-spatial pivot and a description query. **Done 2026-11-09:** three companions created and the ERES description query renamed so the name says ERES. The open pivot issues (P2, P3, P6, P7, P8) apply to all four pivot files: fix them together. **Tested on .gpkg:** on `test_ERES_ELRG_pair.ags` (same 482 results in both groups) each ERES/ELRG pair gives identical results (pivots 10 rows; descriptions 482 rows with identical strata). On `123_test_elrg.ags` both ELRG pivots give 15 rows; 16 of its 17 determinand names fill a column ("Total EPA-16 PAHs" has no column in either pivot). The ELRG description query needs a GEOL group, which `123_test_elrg.ags` does not have. Existing ERES queries give results identical to the committed versions on TC8086 and Esholt. | Medium | Fixed |
+
+---
+
 ## Compatibility (GeoPackage / SQLite) — all queries
 
 **Tested 2026-11-09:** every query was run on AGS2DB output for TC8086 and Esholt, in both formats, through QGIS 3.44's own database connections (the OGR/GeoPackage and SpatiaLite connections). Only whether the query runs and its row count were checked, not how results display as a map layer.
@@ -112,17 +128,18 @@ Issues that affect several files share an ID with a per-file suffix (e.g. `G1a`,
 
 | Query | Header says now | `.gpkg` | `.sqlite` |
 |---|---|---|---|
-| Non-spatial: `add_descriptions_to_contam_results`, `add_descriptions_to_samples`, `geology_summary_table`, `location_summary_table`, `sample_descriptions_from_grag_…`, `select_from_grag_…` | `QGIS 3.x (SpatiaLite / GeoPackage SQLite Provider)` | runs | runs, same rows |
+| Non-spatial: `add_descriptions_to_eres_contam_results` (was `add_descriptions_to_contam_results`), `add_descriptions_to_samples`, `geology_summary_table`, `location_summary_table`, `sample_descriptions_from_grag_…`, `select_from_grag_…` | `QGIS 3.x (SpatiaLite / GeoPackage SQLite Provider)` | runs | runs, same rows |
 | `eres_soil_contamination_pivot_table_no_LOCA` | `SQLite / GeoPackage / DBeaver / QGIS Virtual Layers` | runs | runs, same rows (DBeaver and Virtual Layers not tested) |
 | Spatial (all in `spatial/` except ELRG) | `GeoPackage (.gpkg) from AGS2DB only. Will not work on SpatiaLite (.sqlite) output.` | runs (triaxial needs a TRIT table) | fails: `no such column: L.geom` |
 | `ISPTN.sql`, `borehole_by_depth_and_geol.sql` | one-line `REQUIRES: GeoPackage (.gpkg) from AGS2DB only…` | runs | fails: `no such column: ls.geom` |
-| `elrg_soil_contamination_pivot_table_spatial` | GeoPackage only | not tested (no ELRG table in either file) | not tested |
+| `elrg_soil_contamination_pivot_table_spatial` | GeoPackage only | runs on the ELRG test files (see K3) | not tested |
+| New companions (E1): `elrg_soil_contamination_pivot_table_no_LOCA`, `eres_soil_contamination_pivot_table_spatial`, `add_descriptions_to_elrg_contam_results` | copied from their companion | runs | not tested (expected to behave like their companion) |
 
 | ID | Query file | Issue | Severity | Status |
 |---|---|---|---|---|
 | K1 | All queries | `COMPATIBILITY` / `REQUIRES` wording is inconsistent and partly inaccurate. (1) It says "SpatiaLite", but AGS2DB's `.sqlite` output is not SpatiaLite (see K2). (2) Three styles: full header with `COMPATIBILITY` line, one-line `REQUIRES` note (`ISPTN.sql`, `borehole_by_depth_and_geol.sql`, see H4), and a different tool list (`eres_…pivot`). (3) The non-spatial queries do work on `.sqlite` today; the spatial ones fail only because the geometry column is `GEOMETRY`, not `geom` (with it renamed, all ran with the same row counts; `base_made_ground` also uses `X()`/`Y()`, which return NULL on that output). The Background note above ("`GEOMETRY` in a SpatiaLite (`.sqlite`) database") needs the same correction. Resolve all together once the group has agreed the `.sqlite` plan. | Low | Needs decision |
 | K2 | (AGS2DB plugin, not a query) | AGS2DB's "SpatiaLite (*.sqlite)" option does not produce SpatiaLite. `ags_2_db_algorithm.py` sets `options.driverOptions = ["SPATIALITE=YES"]`, but `QgsVectorFileWriter.SaveVectorOptions` has no `driverOptions` (it is `datasourceOptions`), so the option is ignored. The result is plain OGR SQLite: lowercase names, `ogc_fid`, geometry column `GEOMETRY` stored as WKB, no SpatiaLite metadata tables. Recorded here because it decides what the query headers can say; plugin code is out of scope for this PR. | Medium | For Discussion |
-| K3 | `elrg_soil_contamination_pivot_table_spatial.sql` | Never run: neither TC8086 nor Esholt has an `ELRG` table, so the query fails with `no such table: ELRG` on both formats. Needs an AGS file with ELRG data before its compatibility (or anything else) can be confirmed. | Medium | Open |
+| K3 | `elrg_soil_contamination_pivot_table_spatial.sql` | Never run: neither TC8086 nor Esholt has an `ELRG` table, so the query failed with `no such table: ELRG`. **Fixed (tested 2026-11-09 on .gpkg):** ELRG test data added (`ags_files/123_test_elrg.ags`, user's file; `ags_files/test_ERES_ELRG_pair.ags`). Runs on both: 15 and 10 rows; on the pair file the result is identical to the ERES version. | Medium | Fixed |
 
 ---
 

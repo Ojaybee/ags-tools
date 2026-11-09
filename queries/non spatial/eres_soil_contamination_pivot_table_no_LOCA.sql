@@ -8,6 +8,9 @@
 -- COMPATIBILITY     : SQLite / GeoPackage / DBeaver / QGIS Virtual Layers
 -- AGS VERSION       : AGS 4.0.x / 4.1.x
 -- SOURCE TABLES     : ERES
+-- COMPANIONS        : Same query on the other lab results group: elrg_soil_contamination_pivot_table_no_LOCA.sql.
+--                     Spatial version: eres_soil_contamination_pivot_table_spatial.sql.
+--                     All four share the same pivot logic; a fix to one should be made to all four.
 -- DESCRIPTION       :
 --   Aggregates environmental laboratory testing data from vertical rows into a 
 --   horizontal matrix. Reorganizes every physical sample soil core into a single 

@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : ERES Stratum Correlation (ERES/GEOL)
--- QUERY FILENAME    : add_descriptions_to_contam_results.sql
+-- QUERY FILENAME    : add_descriptions_to_eres_contam_results.sql
 -- AUTHOR / EMAIL    : Richard Meredith / richard.meredith@geo-env.co.uk
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
@@ -8,6 +8,8 @@
 -- COMPATIBILITY     : QGIS 3.x (SpatiaLite / GeoPackage SQLite Provider)
 -- AGS VERSION       : AGS 4.0.x / 4.1.x
 -- SOURCE TABLES     : ERES, GEOL
+-- COMPANION         : add_descriptions_to_elrg_contam_results.sql is the same query on the ELRG group.
+--                     A fix to one should be made to both.
 -- DESCRIPTION       : Correlates environmental laboratory test results (ERES) with their corresponding geological stratum description (GEOL) by dynamically checking if the sample top depth falls between the top and base boundaries of the logged geology records.
 -- ==============================================================================
 -- ==============================================================================
