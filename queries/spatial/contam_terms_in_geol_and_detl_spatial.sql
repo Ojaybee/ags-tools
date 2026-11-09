@@ -4,25 +4,35 @@
 -- AUTHOR / EMAIL    : Richard Meredith / richard.meredith@geo-env.co.uk
 -- ORGANIZATION      : GeoEnvironmental Consulting Ltd
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
--- LICENSE           : GNU GPL v3 (GPL-compatible open-source)
--- COMPATIBILITY     : QGIS 3.x, GeoPackage (.gpkg) from AGS2DB only. Will not work on SpatiaLite (.sqlite) output.
+-- LICENSE           : MIT
+-- COMPATIBILITY     : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)
 -- AGS VERSION       : AGS 4.0.x / 4.1.x
 -- SOURCE TABLES     : GEOL / DETL / LOCA
 -- DESCRIPTION       : Scans both geological layer descriptions (GEOL) and detailed remarks (DETL) for visual, chemical, physical, and olfactory contamination indicators (such as odour, smell, sheen, hydrocarbons, staining, and asbestos). Joins the unified results with LOCA to populate coordinates, ground elevations, and dynamic reduced levels.
 -- ==============================================================================
 
 -- ==============================================================================
--- ⚖️ GNU GPL v3 LICENSE & PROFESSIONAL DISCLAIMER 
+-- ⚖️ MIT LICENSE & PROFESSIONAL DISCLAIMER
 -- ==============================================================================
 -- Copyright (C) 2026 GeoEnvironmental Consulting Ltd
 --
--- This SQL query is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, version 3 of the License.
+-- Permission is hereby granted, free of charge, to any person obtaining a copy
+-- of this software and associated documentation files (the "Software"), to deal
+-- in the Software without restriction, including without limitation the rights
+-- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+-- copies of the Software, and to permit persons to whom the Software is
+-- furnished to do so, subject to the following conditions:
 --
--- This code is distributed WITHOUT ANY WARRANTY; without even the implied 
--- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
--- GNU General Public License for more details <https://www.gnu.org/licenses/>.
+-- The above copyright notice and this permission notice shall be included in all
+-- copies or substantial portions of the Software.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+-- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+-- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+-- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+-- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+-- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+-- SOFTWARE.
 --
 -- TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW:
 -- 1. All implied terms, conditions, and warranties—including but not limited to 

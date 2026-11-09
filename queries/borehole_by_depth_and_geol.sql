@@ -1,4 +1,4 @@
--- REQUIRES: GeoPackage (.gpkg) from AGS2DB only. Will not work on SpatiaLite (.sqlite) output.
+-- COMPATIBILITY : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)
 -- Simple/mini borehole logs used for pop up 
 
 -- labelling an exploratory hole location plan. 
