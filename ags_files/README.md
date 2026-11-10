@@ -140,3 +140,20 @@ Row counts are unchanged for samples (26) and contam results (437). All other ro
 | pivot, spatial | 10 rows each, identical |
 | add stratum descriptions | 482 rows each, identical strata (the query uses `SELECT *`, so the ELRG version shows 28 columns against 34 for ERES, because ELRG has fewer headings) |
 
+
+### `test_S2_lat_lon.ags`
+
+- **Issue:** S2. Checks that `base_made_ground_depth_level_spatial.sql` works in a CRS other than British National Grid.
+- **Source:** `TC8086AF4_add4_trit.ags`, whole file. Only the LOCA group is changed.
+- **Edit:** `LOCA_NATE` and `LOCA_NATN` are blank on all 44 rows. New headings `LOCA_LAT` and `LOCA_LON` after them hold the same positions in WGS84 decimal degrees (6 dp, unit `deg`, type `6DP`), converted from the National Grid values. With no easting/northing data, AGS2DB uses LAT/LON and reprojects them to the CRS chosen in AGS2DB. NATE/NATN are only re-labelled, never reprojected, which is why a BNG file converted with EPSG:3857 plots off West Africa.
+- **Not AGS-standard:** the AGS dictionary gives `LOCA_LAT`/`LOCA_LON` type `DMS` (e.g. `55:53:53.922`), but AGS2DB fails on DMS values (`could not convert string to float`), so decimal degrees are used here (see tracker K5).
+
+Made ground query, converted with AGS2DB in each CRS (old and new versions of the query give the same results):
+
+| AGS2DB CRS | Query layer CRS | Rows / with point | BH111 point (x, y, Z) |
+|---|---|---|---|
+| EPSG:27700 | EPSG:27700 | 22 / 19 | 331495.41, 667836.95, 61.39 |
+| EPSG:3857 | EPSG:3857 | 22 / 19 | -344768.04, 7538286.59, 61.39 |
+| EPSG:32630 (UTM 30N) | EPSG:32630 | 22 / 19 | 493928.01, 6194815.42, 61.39 |
+
+In every CRS the points plot in the same place as TC8086 (within 0.06 m after reprojecting, from rounding the degrees), and all other columns match TC8086. The "Easting"/"Northing" columns come from `X(geom)`/`Y(geom)` here (NATE/NATN are blank), so they are in the chosen CRS.
