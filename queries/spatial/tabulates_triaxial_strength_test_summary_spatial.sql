@@ -136,7 +136,7 @@ SELECT
         -- At the base of the hole only the last stratum matches, so it is still found.
         ORDER BY CAST(NULLIF(G.GEOL_TOP, '') AS REAL) DESC 
         LIMIT 1
-    ) AS "Sample Geology Description",
+    ) AS "Test Geology Description",
 
     -- 6. Core Geotechnical Test Results
     -- Casts results to preserve numeric compatibility for thematic mapping and statistics
