@@ -91,16 +91,23 @@ Issues that affect several files share an ID with a per-file suffix (e.g. `G1a`,
 | H3a | `add_descriptions_to_samples.sql` | CR-only (old Mac) line endings — git and many tools show the whole file as one line, so any edit shows as the whole file changed. **Fix:** converted to CRLF like the other queries; line endings only, text unchanged. Results identical (TC8086 1104 rows, Esholt 459). | Low | Fixed |
 | H3b | `select_from_grag_where_sample_depth_lt_3m_orderby_LOCA_ID_and_depth.sql` | CR-only line endings (see H3a). **Fix:** converted to CRLF (see H3a). Results identical (TC8086 72 rows, Esholt 4). | Low | Fixed |
 
-## Root (`queries/`)
+## Recipes (`queries/recipes/`)
+
+Short starter queries, easy to copy and adapt (user decision 2026-11-10: kept, not retired). They were in the root of `queries/` with other names; the rows below keep the old names they were logged under.
+
+| Old name (root of `queries/`) | Now |
+|---|---|
+| `borehole_by_depth_and_geol.sql` | `recipes/borehole_by_depth_and_geol_spatial.sql` |
+| `ISPTN.sql` | `recipes/ISPTN_spatial.sql` |
 
 | ID | Query file | Issue | Severity | Status |
 |---|---|---|---|---|
 | G1j | `borehole_by_depth_and_geol.sql` | Selects `ls.geom`; fails on `.sqlite` output (see G1a). | High | Fixed |
 | G1k | `ISPTN.sql` | Selects `ls.geom`; fails on `.sqlite` output (see G1a). | High | Fixed |
-| R1 | `borehole_by_depth_and_geol.sql` | `GROUP BY LOCA_ID, GEOL_TOP` with no aggregate functions — arbitrarily hides duplicate rows rather than doing anything useful. | Medium | Open |
-| H4a | `borehole_by_depth_and_geol.sql` | No standard header / `QUERY FILENAME` line; not in the `spatial/` folder or renamed to the naming convention. The one-line `REQUIRES` note is now `COMPATIBILITY : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)` (K1). **Header added 2026-11-09:** full standard header and MIT disclaimer block (author Oliver Burdekin / burdGIS, from the first commit). Moving into a folder / renaming is still to do. | Low | Open |
-| H4b | `ISPTN.sql` | No standard header; not in a folder or renamed (see H4a). The one-line `REQUIRES` note is now `COMPATIBILITY : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)` (K1). Header added with H4a; moving / renaming still to do. | Low | Open |
-| H3c | `borehole_by_depth_and_geol.sql` | Mixed line endings show as doubled blank lines. **Rechecked 2026-11-09:** line endings are now all CRLF. The blank line between every SQL line is real (one in the file), so this is only layout tidying. | Low | Open |
+| R1 | `borehole_by_depth_and_geol.sql` | `GROUP BY LOCA_ID, GEOL_TOP` with no aggregate functions — arbitrarily hides duplicate rows rather than doing anything useful. **Planned fix (after the move to `recipes/` is committed):** remove the `GROUP BY` so every GEOL record is shown, and order by hole, top, base. A GEOL record is identified by `LOCA_ID` + `GEOL_TOP` + `GEOL_BASE`, so two strata can share a top depth; the `GROUP BY` shows only one of them. Test file ready: `ags_files/test_R1_shared_top_depth.ags` (BH90 8 → 9 rows). TC8086 and Esholt have no shared top depths, so they will be unchanged. | Medium | Open |
+| H4a | `borehole_by_depth_and_geol.sql` | No standard header / `QUERY FILENAME` line; not in the `spatial/` folder or renamed to the naming convention. The one-line `REQUIRES` note is now `COMPATIBILITY : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)` (K1). **Header added 2026-11-09:** full standard header and MIT disclaimer block (author Oliver Burdekin / burdGIS, from the first commit). Moving into a folder / renaming is still to do. **Fixed 2026-11-10:** moved to `queries/recipes/` and renamed `borehole_by_depth_and_geol_spatial.sql` (header `QUERY FILENAME` and descriptions updated). | Low | Fixed |
+| H4b | `ISPTN.sql` | No standard header; not in a folder or renamed (see H4a). The one-line `REQUIRES` note is now `COMPATIBILITY : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)` (K1). Header added with H4a; moving / renaming still to do. **Fixed 2026-11-10:** moved to `queries/recipes/` and renamed `ISPTN_spatial.sql`. Results unchanged on TC8086 and Esholt. | Low | Fixed |
+| H3c | `borehole_by_depth_and_geol.sql` | Mixed line endings show as doubled blank lines. **Rechecked 2026-11-09:** line endings are now all CRLF. The blank line between every SQL line is real (one in the file), so this is only layout tidying. **Fixed 2026-11-10:** blank lines between SQL lines removed. | Low | Fixed |
 | H3d | `ISPTN.sql` | Mixed line endings show as doubled blank lines. **Rechecked 2026-11-09:** already fixed: all CRLF, no doubled lines (the file was rewritten for B1). | Low | Fixed |
 
 ---

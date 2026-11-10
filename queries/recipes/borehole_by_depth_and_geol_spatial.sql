@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : Simple Borehole Logs by Depth and Geological Group
--- QUERY FILENAME    : borehole_by_depth_and_geol.sql
+-- QUERY FILENAME    : borehole_by_depth_and_geol_spatial.sql
 -- AUTHOR / EMAIL    : Oliver Burdekin / info@burdgis.com
 -- ORGANIZATION      : burdGIS
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
@@ -8,7 +8,7 @@
 -- COMPATIBILITY     : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)
 -- AGS VERSION       : AGS 4.0.x / 4.1.x
 -- SOURCE TABLES     : GEOL, LOCA
--- DESCRIPTION       : Simple/mini borehole logs used for pop-up labelling of an exploratory hole location plan: one row per stratum with its top and base depth and geological group (first character of GEOL_LEG).
+-- DESCRIPTION       : Simple/mini borehole logs used for pop-up labelling of an exploratory hole location plan: one row per stratum with its top and base depth and geological group (first character of GEOL_LEG). Recipe (starter query): short and easy to copy and adapt.
 -- ==============================================================================
 
 -- ==============================================================================
@@ -60,31 +60,17 @@
 --     England and Wales.
 -- ==============================================================================
 
-
 SELECT
-
     ls.LOCA_ID AS "Exploratory Hole Location",
-
     CAST(gs.GEOL_TOP AS FLOAT) AS "Depth to the top of stratum (m)",
-
     CAST(gs.GEOL_BASE AS FLOAT) AS "Depth to the base of stratum (m)",
-
     substr(gs.GEOL_LEG, 1, 1) AS "Geological group",
-
     ls.geom
-
 FROM
-
     loca ls
-
 JOIN
-
     GEOL gs ON ls.LOCA_ID = gs.LOCA_ID
-
 GROUP BY
-
     ls.LOCA_ID, gs.GEOL_TOP
-
 ORDER BY
-
     ls.LOCA_ID, CAST(gs.GEOL_TOP AS FLOAT);

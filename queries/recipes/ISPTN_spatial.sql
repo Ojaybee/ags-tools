@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- QUERY TITLE       : SPT N Values with Geological Group
--- QUERY FILENAME    : ISPTN.sql
+-- QUERY FILENAME    : ISPTN_spatial.sql
 -- AUTHOR / EMAIL    : Oliver Burdekin / info@burdgis.com
 -- ORGANIZATION      : burdGIS
 -- PROJECT / TOOLS   : AGS Tools Project (FOSS)
@@ -8,7 +8,7 @@
 -- COMPATIBILITY     : QGIS 3.x, QGIS 4.x, GeoPackage (.gpkg)
 -- AGS VERSION       : AGS 4.0.x / 4.1.x
 -- SOURCE TABLES     : ISPT, GEOL, LOCA
--- DESCRIPTION       : Lists each SPT test (ISPT) at its exploratory hole location with the test depth, the N value (ISPT_NVAL) and the geological group (first character of GEOL_LEG) of the stratum at the test depth.
+-- DESCRIPTION       : Lists each SPT test (ISPT) at its exploratory hole location with the test depth, the N value (ISPT_NVAL) and the geological group (first character of GEOL_LEG) of the stratum at the test depth. Recipe (starter query): short and easy to copy and adapt.
 -- ==============================================================================
 
 -- ==============================================================================

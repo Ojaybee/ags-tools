@@ -102,7 +102,7 @@ After the C1 fix, the queries run on TC8086: triaxial 51 rows, SPT 169, contamin
 
 ### `test_B1_end_of_hole.ags`
 
-- **Issue:** B1 (end-of-hole part). `add_descriptions_to_samples.sql`, `add_descriptions_to_eres_contam_results.sql` (then named `add_descriptions_to_contam_results.sql`) and `ISPTN.sql` matched `GEOL_TOP <= depth < GEOL_BASE`, so a depth equal to the base of the deepest stratum (the bottom of the hole) matched no stratum.
+- **Issue:** B1 (end-of-hole part). `add_descriptions_to_samples.sql`, `add_descriptions_to_eres_contam_results.sql` (then named `add_descriptions_to_contam_results.sql`) and `ISPTN.sql` (now `recipes/ISPTN_spatial.sql`) matched `GEOL_TOP <= depth < GEOL_BASE`, so a depth equal to the base of the deepest stratum (the bottom of the hole) matched no stratum.
 - **Source:** `TC8086AF4_add4_trit.ags`
 - **Groups:** PROJ, TRAN, ABBR, TYPE, UNIT (copied whole) and LOCA, GEOL, SAMP, ERES, ISPT (TP43, BH113)
 - **Edit:** TP43 ES sample 10 moved from 1.70 to 2.60 (the base of the hole) in SAMP (`SAMP_BASE` 1.80 cleared) and in its 41 ERES rows (noted in `ERES_REM`). Neither real file has a contam result at the base of a hole, so this edit is needed for the contam query. Everything else is unchanged: TP43 D sample 12 at 2.60 and the BH113 SPT at 3.10 are real end-of-hole records.
@@ -112,7 +112,7 @@ After the C1 fix, the queries run on TC8086: triaxial 51 rows, SPT 169, contamin
 |---|---|---|---|
 | samples | TP43 sample 10 (ES) and 12 (D) at 2.60 | GEOL columns blank | stratum 1.60–2.60, legend 528 |
 | contam results | TP43 sample 10 at 2.60 (41 results) | GEOL columns blank | stratum 1.60–2.60, legend 528 |
-| `ISPTN.sql` | BH113 SPT at 3.10 | missing (2 rows for BH113) | included, group 2 (3 rows) |
+| `ISPTN.sql` (now `recipes/ISPTN_spatial.sql`) | BH113 SPT at 3.10 | missing (2 rows for BH113) | included, group 2 (3 rows) |
 
 Row counts are unchanged for samples (26) and contam results (437). All other rows are identical.
 
@@ -174,3 +174,18 @@ In every CRS the points plot in the same place as TC8086 (within 0.06 m after re
 | DSE104A | none (control: not bottomed and no `LOCA_GL`) | MG not bottomed; > 1.74 | unchanged |
 
 "Stratum Status" stays "Confirmed Base" for BHE103 and BHE104A: the depth to the base is known, only the level is not. The numeric level and point stay empty.
+
+### `test_R1_shared_top_depth.ags`
+
+- **Issue:** R1. `recipes/borehole_by_depth_and_geol_spatial.sql` (was `borehole_by_depth_and_geol.sql`) has `GROUP BY LOCA_ID, GEOL_TOP`, which merges strata sharing a top depth and shows only one of them (fix pending). AGS allows this: a GEOL record is identified by `LOCA_ID` + `GEOL_TOP` + `GEOL_BASE`.
+- **Source:** `TC8086AF4_add4_trit.ags`
+- **Groups:** PROJ, TRAN, ABBR, TYPE, UNIT (copied whole) and LOCA, GEOL (BH90, BH112)
+- **Edit:** one GEOL row added to BH90: 0.00–1.00, legend 102, a summary of the three made ground strata, so it shares `GEOL_TOP` 0.00 with the 0.00–0.10 stratum (`GEOL_REM`: `TEST R1: ...`). BH112 is unchanged (control).
+
+| Hole | Before R1 fix | After R1 fix |
+|---|---|---|
+| BH90 | 8 rows; the added 0.00–1.00 stratum is **missing** | 9 rows, including 0.00–1.00 (group 1) |
+| BH112 | 14 rows | 14 rows, unchanged |
+
+TC8086 (445 rows) and Esholt (159 rows) are unchanged: neither has two strata sharing a top depth.
+
