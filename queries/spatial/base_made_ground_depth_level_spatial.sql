@@ -14,7 +14,9 @@
 --   Made Ground was not bottomed.
 --
 --   SPATIALLY ENABLED: Retains Easting, Northing, Ground Level, and dynamically
---   constructs 3D SpatiaLite Geometry (MakePointZ) using calculated base levels.
+--   constructs a 3D point geometry (MakePointZ) using calculated base levels.
+--   In QGIS the GeoPackage is read through GDAL, which provides X(), Y(), SRID() and
+--   MakePointZ(). The point uses the CRS of the LOCA layer (the CRS chosen in AGS2DB).
 --   If the Made Ground was not bottomed, the geometry is set to NULL to prevent
 --   unverified boundary intersections from distorting geological models or contours.
 --
@@ -135,13 +137,14 @@ SELECT
     -- 6. Dynamic 3D Spatial Geometry Construction
     -- Set geom to NULL if the stratum base was not bottomed or cannot be confirmed (missing depth data),
     -- as we cannot identify the actual geometry of the boundary.
-    -- Otherwise, construct a 3D SpatiaLite geometry point using the calculated Z base level.
+    -- Otherwise, construct a 3D point (MakePointZ) using the calculated Z base level, in the
+    -- CRS of the LOCA layer (SRID of L.geom, i.e. the CRS chosen in AGS2DB).
     CASE
         WHEN MAX(MG.Cleaned_Base) IS NULL OR CAST(NULLIF(L.LOCA_FDEP, '') AS REAL) IS NULL
         THEN NULL
         WHEN MAX(MG.Cleaned_Base) >= CAST(NULLIF(L.LOCA_FDEP, '') AS REAL)
         THEN NULL
-        ELSE MakePointZ(X(L.geom), Y(L.geom), ROUND(CAST(NULLIF(L.LOCA_GL, '') AS REAL) - MAX(MG.Cleaned_Base), 2), COALESCE(SRID(L.geom), 27700))
+        ELSE MakePointZ(X(L.geom), Y(L.geom), ROUND(CAST(NULLIF(L.LOCA_GL, '') AS REAL) - MAX(MG.Cleaned_Base), 2), SRID(L.geom))
     END AS geom
 
 FROM 
