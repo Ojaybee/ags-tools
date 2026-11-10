@@ -85,7 +85,6 @@ SELECT
 
     -- 2. Location & Spatial Identifiers
     T.LOCA_ID AS "Exploratory Hole Location",
--- STREAMING_CHUNK: Mapping National Grid coordinate fields...
     CAST(NULLIF(L.LOCA_NATE, '') AS REAL) AS "Easting",
     CAST(NULLIF(L.LOCA_NATN, '') AS REAL) AS "Northing",
     CAST(NULLIF(L.LOCA_GL, '') AS REAL) AS "Ground Level (mAOD)",
@@ -96,7 +95,6 @@ SELECT
     CAST(NULLIF(T.SAMP_TOP, '') AS REAL) AS "Sample top depth",
     T.SPEC_REF AS "Specimen Reference",
     
--- STREAMING_CHUNK: Executing depth-matched geological legend lookup...
     -- Dynamic Geology Legend Code lookup at specimen depth (from GEOL_LEG)
     (
         SELECT G.GEOL_LEG 
@@ -122,7 +120,6 @@ SELECT
         2
     ) AS "Specimen Level (mAOD)",
 
--- STREAMING_CHUNK: Correlating specimen depth with geological unit descriptions...
     -- 5. Dynamic Geological Description lookup at specimen depth
     -- Uses a subquery with LIMIT 1 to prevent row multiplication in case of overlapping GEOL boundaries
     (

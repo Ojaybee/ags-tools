@@ -83,7 +83,6 @@ SELECT
     -- Dynamic Level calculation: Z = Ground Elevation - Sample Depth (Rounded to 2 decimal places)
     ROUND(CAST(NULLIF(L.LOCA_GL, '') AS REAL) - CAST(NULLIF(E.SAMP_TOP, '') AS REAL), 2) AS "Sample Top Elevation (mAOD)",
 
--- STREAMING_CHUNK: Pivoting ELRG metals and speciated chromium...
     -- 3. Pivoted Metals Columns (Ordered exactly as per Column B of your Screening Sheet)
     -- Mapping combines standard CAS Codes (ELRG_CODE) and text variations (ELRG_NAME)
     
@@ -132,7 +131,6 @@ SELECT
     -- (15) Zinc
     MAX(CASE WHEN E.ELRG_CODE = '7440-66-6' OR E.ELRG_NAME LIKE '%Zinc%' THEN E.ELRG_RTXT END) AS "Zinc",
 
--- STREAMING_CHUNK: Pivoting ELRG BTEX compounds...
     -- 4. Pivoted BTEX Columns (Ordered exactly as per Column B of your Screening Sheet)
     
     -- (16) Benzene
@@ -153,7 +151,6 @@ SELECT
     -- (21) P – Xylene (Empty/Null placeholder if reported combined above, otherwise populated if split)
     MAX(CASE WHEN E.ELRG_NAME = 'p-Xylene' THEN E.ELRG_RTXT END) AS "P – Xylene",
 
--- STREAMING_CHUNK: Pivoting ELRG PAHs...
     -- 5. Pivoted Polycyclic Aromatic Hydrocarbons (PAHs)
     -- Column names match spreadsheet layout exactly, mimicking trailing spaces where present
     
@@ -208,7 +205,6 @@ SELECT
     -- (38) Coal Tar (Bap as surrogate marker)
     MAX(CASE WHEN E.ELRG_CODE = '50-32-8' OR E.ELRG_NAME IN ('Benzo(a)pyrene', 'Benzo[a]pyrene') THEN E.ELRG_RTXT END) AS "Coal Tar (Bap as surrogate marker) ",
 
--- STREAMING_CHUNK: Pivoting ELRG explosives...
     -- 6. Pivoted Explosive Compounds (Placed exactly between PAHs and TPHs as per your Soil Screening Sheet)
     
     -- (39) 2, 4, 6 Trinitrotoluene
@@ -220,7 +216,6 @@ SELECT
     -- (41) HMX (High Melting Explosive C4H8N8O8)
     MAX(CASE WHEN E.ELRG_CODE = '2691-41-0' OR E.ELRG_NAME LIKE '%HMX%' OR E.ELRG_NAME LIKE '%Cyclotetramethylenetetranitramine%' THEN E.ELRG_RTXT END) AS "HMX (High Melting Explosive C4H8N8O8) ",
 
--- STREAMING_CHUNK: Pivoting ELRG TPH fractions...
     -- 7. Pivoted Petroleum Hydrocarbons (TPH Fractions)
     -- Ordered exactly as per Column B of your Screening Sheet
     
@@ -251,7 +246,6 @@ SELECT
     -- (48) Aliphatic EC >35-44
     MAX(CASE WHEN E.ELRG_CODE = 'P1415' OR E.ELRG_NAME LIKE '%Aliphatics%C35-44%' THEN E.ELRG_RTXT END) AS "Aliphatic EC >35-44",
 
--- STREAMING_CHUNK: Pivoting ELRG aromatics...
     -- (49) Aromatic EC 5-7 (benzene)
     MAX(CASE WHEN E.ELRG_CODE = 'P1354' OR E.ELRG_NAME LIKE '%Aromatics%C6-7%' THEN E.ELRG_RTXT END) AS "Aromatic EC 5-7 (benzene) ",
     
@@ -279,7 +273,6 @@ SELECT
     -- (57) Aliphatic+Aromatic EC >44-70 (Spacer/Null placeholder column to keep column alignment for copy-pasting)
     NULL AS "Aliphatic+Aromatic   EC >44-70",
 
--- STREAMING_CHUNK: Pivoting ELRG Chloroalkanes...
     -- 8. Pivoted Chloroalkanes & Chloroalkenes (Ordered exactly as per Column B of your Screening Sheet)
     
     -- (58) 1,2-Dichloroethane
@@ -309,7 +302,6 @@ SELECT
     -- (66) Chloroethene (Vinyl Chloride)
     MAX(CASE WHEN E.ELRG_CODE = '75-01-4' OR E.ELRG_NAME = 'Vinyl chloride' THEN E.ELRG_RTXT END) AS "Chloroethene  (Vinyl Chloride) ",
 
--- STREAMING_CHUNK: Pivoting ELRG Halogenated Hydrocarbons...
     -- 9. Pivoted Halogenated HCs
     
     -- (67) 1,1,2 Trichloroethane
@@ -354,7 +346,6 @@ SELECT
     -- (80) Hexachloroethane
     MAX(CASE WHEN E.ELRG_CODE = '67-72-1' OR E.ELRG_NAME = 'Hexachloroethane' THEN E.ELRG_RTXT END) AS "Hexachloroethane ",
 
--- STREAMING_CHUNK: Pivoting ELRG Phenols and Chlorophenols...
     -- 10. Pivoted Phenols & Chlorophenols
     
     -- (81) Phenol
@@ -403,7 +394,6 @@ SELECT
     -- (92) Methyl tert-butyl ether (MTBE)
     MAX(CASE WHEN E.ELRG_CODE = '1634-04-4' OR E.ELRG_NAME = 'Methyl tert-butyl ether (MTBE)' THEN E.ELRG_RTXT END) AS "Methyl tert-butyl ether (MTBE)",
 
--- STREAMING_CHUNK: Pivoting ELRG Pesticides...
     -- 12. Pivoted Pesticides
     
     -- (93) Aldrin
@@ -433,7 +423,6 @@ SELECT
     -- (101) Gamma – Hexachlorocyclohexane
     MAX(CASE WHEN E.ELRG_CODE = '58-89-9' OR E.ELRG_NAME LIKE '%gamma-HCH%' OR E.ELRG_NAME LIKE '%Lindane%' OR E.ELRG_NAME LIKE '%gamma-hexachlorocyclohexane%' THEN E.ELRG_RTXT END) AS "Gamma – Hexachlorocyclohexane  ",
 
--- STREAMING_CHUNK: Pivoting ELRG Phthalates...
     -- 13. Pivoted Phthalates (Spelled "Phthaltes" to mirror the screening sheet perfectly)
     
     -- (102) Bis (2-ethylhexyl) phthalate
@@ -451,7 +440,6 @@ SELECT
     -- (106) Di-n-octyl phthalate
     MAX(CASE WHEN E.ELRG_CODE = '117-84-0' OR E.ELRG_NAME = 'Di-n-octyl phthalate' THEN E.ELRG_RTXT END) AS "Di-n-octyl phthalate ",
 
--- STREAMING_CHUNK: Pivoting ELRG Aromatic Hydrocarbons...
     -- 14. Pivoted Aromatic HCs
     
     -- (107) 1,2,4-Trimethylbenzene
@@ -466,7 +454,6 @@ SELECT
     -- (110) Styrene
     MAX(CASE WHEN E.ELRG_CODE = '100-42-5' OR E.ELRG_NAME = 'Styrene' THEN E.ELRG_RTXT END) AS "Styrene  ",
 
--- STREAMING_CHUNK: Pivoting ELRG Chlorobenzenes...
     -- 15. Pivoted Chlorobenzenes
     
     -- (111) Chlorobenzene
@@ -505,7 +492,6 @@ SELECT
     -- (122) Hexachlorobenzene (HCB)
     MAX(CASE WHEN E.ELRG_CODE = '118-74-1' OR E.ELRG_NAME = 'Hexachlorobenzene' THEN E.ELRG_RTXT END) AS "Hexachlorobenzene (HCB) ",
 
--- STREAMING_CHUNK: Correlating spatial parameters and completing join...
     -- 16. Geometry mapping column for QGIS GeoPackage
     L.geom
 
