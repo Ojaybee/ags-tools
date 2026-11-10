@@ -175,17 +175,3 @@ In every CRS the points plot in the same place as TC8086 (within 0.06 m after re
 
 "Stratum Status" stays "Confirmed Base" for BHE103 and BHE104A: the depth to the base is known, only the level is not. The numeric level and point stay empty.
 
-### `test_R1_shared_top_depth.ags`
-
-- **Issue:** R1. `recipes/borehole_by_depth_and_geol_spatial.sql` (was `borehole_by_depth_and_geol.sql`) has `GROUP BY LOCA_ID, GEOL_TOP`, which merges strata sharing a top depth and shows only one of them (fix pending). AGS allows this: a GEOL record is identified by `LOCA_ID` + `GEOL_TOP` + `GEOL_BASE`.
-- **Source:** `TC8086AF4_add4_trit.ags`
-- **Groups:** PROJ, TRAN, ABBR, TYPE, UNIT (copied whole) and LOCA, GEOL (BH90, BH112)
-- **Edit:** one GEOL row added to BH90: 0.00–1.00, legend 102, a summary of the three made ground strata, so it shares `GEOL_TOP` 0.00 with the 0.00–0.10 stratum (`GEOL_REM`: `TEST R1: ...`). BH112 is unchanged (control).
-
-| Hole | Before R1 fix | After R1 fix |
-|---|---|---|
-| BH90 | 8 rows; the added 0.00–1.00 stratum is **missing** | 9 rows, including 0.00–1.00 (group 1) |
-| BH112 | 14 rows | 14 rows, unchanged |
-
-TC8086 (445 rows) and Esholt (159 rows) are unchanged: neither has two strata sharing a top depth.
-
