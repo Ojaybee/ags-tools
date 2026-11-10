@@ -175,3 +175,20 @@ In every CRS the points plot in the same place as TC8086 (within 0.06 m after re
 
 "Stratum Status" stays "Confirmed Base" for BHE103 and BHE104A: the depth to the base is known, only the level is not. The numeric level and point stay empty.
 
+
+### `test_S10_oil_at_start.ags`
+
+- **Issue:** S10. In `contam_terms_in_geol_and_detl_spatial.sql` the search `LIKE '% oil%'` needs a space before "oil" (so that "soil" and "topsoil" don't match), which meant text starting with "Oil" was missed.
+- **Source:** `TC8086AF4_add4_trit.ags`
+- **Groups:** PROJ, TRAN, ABBR, TYPE, UNIT (copied whole) and LOCA, GEOL, DETL (BH90 only)
+- **Edits:** three descriptions. The GEOL edit is noted in `GEOL_REM` (`TEST S10: ...`); DETL has no remarks heading in this file, so the DETL edits are listed here only.
+
+| Record | Edit | Before S10 fix | After S10 fix |
+|---|---|---|---|
+| GEOL 1.00–1.20 | `GEOL_DESC` now starts "Oily brownish yellow…" | not found | **found** |
+| DETL 4.00 | `DETL_DESC` now "Oily black gravel at 4.00m" | not found | **found** |
+| DETL 6.20–6.70 | `DETL_DESC` now "…with oil droplets and…" (control: space before "oil") | found | found |
+| GEOL 0.00–0.10 | none (control: "MADE GROUND: Topsoil…") | not found | not found |
+
+TC8086 (78 rows) and Esholt (32 rows) are unchanged: neither has the word "oil" in GEOL or DETL.
+

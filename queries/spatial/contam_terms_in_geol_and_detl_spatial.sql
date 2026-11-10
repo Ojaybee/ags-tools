@@ -92,7 +92,7 @@ UnifiedContam AS (
         G.geol_desc LIKE '%stain%' OR
         G.geol_desc LIKE '%smell%' OR
         G.geol_desc LIKE '%sheen%' OR
-        G.geol_desc LIKE '% oil%' OR
+        (' ' || G.geol_desc) LIKE '% oil%' OR  -- space added so text starting with "Oil" matches; "soil" still does not (S10)
         G.geol_desc LIKE '%hydrocarbon%' OR
         G.geol_desc LIKE '%chemical%' OR
         G.geol_desc LIKE '%asbestos%'
@@ -114,7 +114,7 @@ UnifiedContam AS (
         D.detl_rem LIKE '%stain%' OR
         D.detl_rem LIKE '%smell%' OR
         D.detl_rem LIKE '%sheen%' OR
-        D.detl_rem LIKE '% oil%' OR
+        (' ' || D.detl_rem) LIKE '% oil%' OR  -- space added so text starting with "Oil" matches; "soil" still does not (S10)
         D.detl_rem LIKE '%hydrocarbon%' OR
         D.detl_rem LIKE '%chemical%' OR
         D.detl_rem LIKE '%asbestos%' OR
@@ -124,7 +124,7 @@ UnifiedContam AS (
         D.detl_desc LIKE '%stain%' OR
         D.detl_desc LIKE '%smell%' OR
         D.detl_desc LIKE '%sheen%' OR
-        D.detl_desc LIKE '% oil%' OR
+        (' ' || D.detl_desc) LIKE '% oil%' OR  -- space added so text starting with "Oil" matches; "soil" still does not (S10)
         D.detl_desc LIKE '%hydrocarbon%' OR
         D.detl_desc LIKE '%chemical%' OR
         D.detl_desc LIKE '%asbestos%'
