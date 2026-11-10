@@ -113,6 +113,10 @@ SELECT
         THEN 'Unknown; missing final depth or MG base'
         WHEN MAX(MG.Cleaned_Base) >= CAST(NULLIF(L.LOCA_FDEP, '') AS REAL)
         THEN 'MG not bottomed; > ' || L.LOCA_FDEP
+        -- Base confirmed but no ground level (LOCA_GL): the level cannot be calculated (S12).
+        -- The numeric level and the point are also empty for these holes.
+        WHEN CAST(NULLIF(L.LOCA_GL, '') AS REAL) IS NULL
+        THEN 'Unknown; missing ground level'
         ELSE CAST(ROUND(CAST(NULLIF(L.LOCA_GL, '') AS REAL) - MAX(MG.Cleaned_Base), 2) AS TEXT)
     END AS "Base Reduced Level (m)",
 

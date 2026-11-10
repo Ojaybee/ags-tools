@@ -11,6 +11,7 @@ Each dummy file is a cut-down copy of a real source file. Lines are copied uncha
 | File | Notes |
 |---|---|
 | `TC8086AF4_add4_trit.ags` | A720 Sheriffhall Roundabout Improvement (AGS 4.0.4), 59 groups. Real data, not edited. |
+| `../test/data/Esholt.ags` | Esholt (real data, not edited), 38 groups. Kept with the plugin tests in `test/data/`. |
 
 ## Dummy files
 
@@ -157,3 +158,19 @@ Made ground query, converted with AGS2DB in each CRS (old and new versions of th
 | EPSG:32630 (UTM 30N) | EPSG:32630 | 22 / 19 | 493928.01, 6194815.42, 61.39 |
 
 In every CRS the points plot in the same place as TC8086 (within 0.06 m after reprojecting, from rounding the degrees), and all other columns match TC8086. The "Easting"/"Northing" columns come from `X(geom)`/`Y(geom)` here (NATE/NATN are blank), so they are in the chosen CRS.
+
+### `test_S12_missing_ground_level.ags`
+
+- **Issue:** S12. In `base_made_ground_depth_level_spatial.sql`, a hole with a confirmed Made Ground base but no ground level (`LOCA_GL`) got a blank "Base Reduced Level (m)" with no reason.
+- **Source:** `../test/data/Esholt.ags`
+- **Groups:** PROJ, ABBR, DICT, TRAN, TYPE, UNIT (copied whole) and LOCA, GEOL (5 holes only)
+
+| Hole | Edit | Before S12 fix | After S12 fix |
+|---|---|---|---|
+| BHE101 | none (control) | 53.09, Confirmed Base, point | unchanged |
+| BHE103 | `LOCA_GL` removed (has coordinates) | **blank**, Confirmed Base, no point | Unknown; missing ground level, Confirmed Base, no point |
+| BHE104A | none (real case: no `LOCA_GL`, no coordinates) | **blank**, Confirmed Base, no point | Unknown; missing ground level, Confirmed Base, no point |
+| BHE104 | none (control: not bottomed) | MG not bottomed; > 3.95 | unchanged |
+| DSE104A | none (control: not bottomed and no `LOCA_GL`) | MG not bottomed; > 1.74 | unchanged |
+
+"Stratum Status" stays "Confirmed Base" for BHE103 and BHE104A: the depth to the base is known, only the level is not. The numeric level and point stay empty.
