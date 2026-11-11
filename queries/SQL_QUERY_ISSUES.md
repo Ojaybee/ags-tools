@@ -4,7 +4,7 @@ Tracker for problems found in the `.sql` queries under `queries/`, so they can b
 
 - **Reviewed:** 2026-11-04 (static review only — queries were read, not run against a database)
 - **Severity:** **High** = wrong results or query fails · **Medium** = logic / consistency · **Low** = housekeeping
-- **Status:** `Open` · `In progress` · `Fixed` · `Won't fix` · `Needs decision` · `For Discussion` (change made, but approach to be agreed) · `Parked` (on hold — needs testing with real AGS files)
+- **Status:** `Open` · `In progress` · `Fixed` · `Won't fix` · `Needs decision` · `For Discussion` (change made, but approach to be agreed) · `Parked` (on hold — needs testing with real AGS files) · `Follow-up` (out of scope for this PR; to be done separately)
 
 Issues that affect several files share an ID with a per-file suffix (e.g. `G1a`, `G1b`) so they can be tracked together.
 
@@ -151,6 +151,14 @@ Laboratory results can come in either AGS group: `ERES` or `ELRG`. Both are need
 | K3 | `elrg_soil_contamination_pivot_table_spatial.sql` | Never run: neither TC8086 nor Esholt has an `ELRG` table, so the query failed with `no such table: ELRG`. **Fixed (tested 2026-11-09 on .gpkg):** ELRG test data added (`ags_files/123_test_elrg.ags`, user's file; `ags_files/test_ERES_ELRG_pair.ags`). Runs on both: 15 and 10 rows; on the pair file the result is identical to the ERES version. | Medium | Fixed |
 | K4 | (AGS2DB plugin, not a query) | **For information only** (found testing S2). The AGS2DB CRS setting must be the CRS the file's coordinates are already in. LOCA_NATE/NATN (and LOCX/LOCY) are labelled with it, not converted, so a British National Grid file converted with EPSG:3857 plots off West Africa. Only LOCA_LAT/LOCA_LON are reprojected (from WGS84), and AGS2DB reads them as decimal degrees. No query change needed; plugin code is out of scope for this PR. | Low | Won't fix |
 | K5 | (AGS2DB plugin, not a query) | Found testing S2. The AGS standard gives `LOCA_LAT`/`LOCA_LON` type `DMS` (e.g. `55:53:53.922`), but AGS2DB reads them with `float()`, so a file that has DMS lat/lon and no eastings/northings fails to convert: `ValueError: could not convert string to float: '55:53:53.922'` (`ags_2_db_algorithm.py`, `createLOCAFeatures`). Only decimal degrees work today; `ags_files/test_S2_lat_lon.ags` uses decimal degrees for this reason. Files with LOCA_NATE/NATN data are not affected (eastings/northings are used first). **Fix needed in the plugin:** convert DMS to decimal degrees before reprojecting. Not fixed in this PR (plugin code). | Medium | For Discussion |
+
+---
+
+## Follow-up (separate PRs)
+
+| ID | Area | Item | Severity | Status |
+|---|---|---|---|---|
+| T1 | Testing (repo-wide) | **Automated query tests.** Today each fix is checked by hand with the test `.ags` files in `ags_files/` and the expected results in `ags_files/README.md`. pytest is not in the repo or in the QGIS Python, `test/` only has the Plugin Builder `unittest` tests, and `make test` uses `nosetests` (unmaintained). Agreed 2026-11-11 to do this as a separate PR, not this one. **Scope:** (1) agree with the group which QGIS versions and platforms to support, and local runs only or CI too (e.g. GitHub Actions with a QGIS Docker image); (2) a way to find the QGIS Python on any machine (e.g. `run_tests.bat` / `run_tests.sh` taking the QGIS path from an environment variable), with setup steps in the README; (3) pytest in `test/`: a `conftest.py` that builds a `.gpkg` from each `ags_files/*.ags` with AGS2DB once per run, and `test_queries.py` with a smoke test (every query runs) plus one check per fixed issue, taken from `ags_files/README.md`; (4) retire the nose-based `make test` (the existing `unittest` tests run under pytest). Spatial queries need QGIS/GDAL (`X()`, `Y()`, `SRID()`, `MakePointZ()`), so tests must run with the QGIS Python. | Medium | Follow-up |
 
 ---
 
