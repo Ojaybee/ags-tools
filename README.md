@@ -52,12 +52,11 @@ Validates an AGS4 file against the selected dictionary using the **BGS AGSAPI**,
 
 There are some example SQL queries e.g. geology_summary_table which can be accessed via the Database then DB Manager menus. 
 
-Scripts are loaded from: C:\Users\user_name\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\ags_tools\queries
-You will need to change user_name to your own user name.
+Scripts are loaded from: C:\Users\user_name\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\ags_tools\queries. **You will need to change user_name to your own user name.**
 
 `queries/recipes` holds short starter queries that are easy to copy and adapt.
 
-**Spatial queries** (those in `queries/spatial` and `queries/recipes`) use the LOCA `geom` column, so they need a **GeoPackage (.gpkg)** created by AGS2DB.
+All queries run on the **GeoPackage (.gpkg)** created by AGS2DB. Queries in `queries/spatial` and `queries/recipes` also return the LOCA geometry, so their results can be loaded as a map layer; those in `queries/non spatial` return plain tables.
 
 
 
