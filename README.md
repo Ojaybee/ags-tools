@@ -3,14 +3,14 @@
 ### AGS2DB (AGS → GeoPackage)
 
 **What it does**  
-Converts an AGS4 file into a GIS-ready GeoPackage or SQLite database.
+Converts an AGS4 file into a GIS-ready GeoPackage database.
 
 **Inputs**
 - **Input file**: `.ags` (AGS4).
 
 
 **Output**
-- **GeoPackage** `.gpkg` or **SpatialLite** `.sqlite` 
+- **GeoPackage** `.gpkg`
 
 **How to use**
 1. Open **Processing Toolbox → AGS Tools → AGS2DB**.  
@@ -47,6 +47,18 @@ Validates an AGS4 file against the selected dictionary using the **BGS AGSAPI**,
 - **Internet required**: the tool posts your file to the BGS AGSAPI and saves the response.
 
 ---
+
+### SQL Queries
+
+There are some example SQL queries e.g. geology_summary_table which can be accessed via the Database then DB Manager menus. 
+
+Scripts are loaded from: C:\Users\user_name\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\ags_tools\queries. **You will need to change user_name to your own user name.**
+
+`queries/recipes` holds short starter queries that are easy to copy and adapt.
+
+All queries run on the **GeoPackage (.gpkg)** created by AGS2DB. Queries in `queries/spatial` and `queries/recipes` also return the LOCA geometry, so their results can be loaded as a map layer; those in `queries/non spatial` return plain tables.
+
+
 
 ## Contributing
 
@@ -97,7 +109,7 @@ Please follow the style and structure already used in the plugin. Keep changes a
 
 ### Licensing & attribution
 
-This plugin is licensed **GPL-2.0-or-later**.  
+This plugin is licensed **MIT**.  
 It uses the British Geological Survey **AGSAPI**.  
 *Contains public sector information licensed under the Open Government Licence v3.0.*  
 See the OGL: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
